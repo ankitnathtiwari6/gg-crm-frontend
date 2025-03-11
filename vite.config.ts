@@ -7,5 +7,5 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [tailwindcss(), react()],
 
-  base: "/gg-crm-frontend",
+  base: "/gg-crm-frontend/",
 });
