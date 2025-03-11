@@ -1,104 +1,58 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Sidebar from "../components/Sidebar";
-import { LeadsTable } from "../components/LeadsTable";
-import { Lead } from "../types";
+import LeadsTable from "../components/LeadsTable";
 import { Filters } from "../components/Filters";
 import { SearchBar } from "../components/Search";
-import axios from "axios";
-
-// API base URL - should be in an environment config
-const API_URL = "http://localhost:3000/api";
+import {
+  fetchLeads,
+  setSearchQuery,
+  setFilters,
+  setPage,
+  clearError,
+  selectLeadsState,
+  selectLeads,
+  selectIsLoading,
+  selectError,
+  selectFilters,
+  selectPagination,
+} from "../redux/slices/leadsSlice";
+import { AppDispatch } from "../redux/store";
 
 const HomePage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [leadData, setLeadData] = useState<Lead[]>([]);
-  const [filters, setFilters] = useState({
-    neetStatus: "",
-    neetScoreRange: [0, 720] as [number, number],
-    country: "",
-    location: "",
-    isQualified: false,
-    dateRange: {
-      start: "",
-      end: "",
-    },
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalLeads, setTotalLeads] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const itemsPerPage = 20; // Match the backend default
-
-  const fetchLeads = async (pageNumber: number) => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append("search", searchQuery);
-
-      // NEET status filtering
-      if (filters.neetStatus) params.append("neetStatus", filters.neetStatus);
-
-      // NEET score range
-      if (filters.neetScoreRange[0] > 0)
-        params.append("minScore", filters.neetScoreRange[0].toString());
-      if (filters.neetScoreRange[1] < 720)
-        params.append("maxScore", filters.neetScoreRange[1].toString());
-
-      // Location filters
-      if (filters.country) params.append("country", filters.country);
-      if (filters.location) params.append("location", filters.location);
-
-      // Qualified status
-      if (filters.isQualified) params.append("isQualified", "true");
-
-      // Date range
-      if (filters.dateRange.start)
-        params.append("startDate", filters.dateRange.start);
-      if (filters.dateRange.end)
-        params.append("endDate", filters.dateRange.end);
-
-      // Pagination
-      params.append("page", pageNumber.toString());
-      params.append("limit", itemsPerPage.toString());
-
-      const response = await axios.get(`${API_URL}/leads?${params.toString()}`);
-
-      if (response.data.success) {
-        setLeadData(response.data.leads);
-        setTotalPages(response.data.totalPages);
-        setTotalLeads(response.data.totalLeads);
-      } else {
-        throw new Error(response.data.message || "Failed to fetch leads");
-      }
-    } catch (error) {
-      console.error("Error fetching leads:", error);
-      setError("Failed to load leads. Please try again.");
-      setLeadData([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, filters]);
+  const dispatch = useDispatch<AppDispatch>();
+  const leads = useSelector(selectLeads);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
+  const filters = useSelector(selectFilters);
+  const { currentPage, totalPages, totalLeads, itemsPerPage } =
+    useSelector(selectPagination);
+  const { searchQuery } = useSelector(selectLeadsState);
 
   // Fetch leads when page or filters change
   useEffect(() => {
-    fetchLeads(currentPage);
-  }, [currentPage, searchQuery, filters]);
+    dispatch(fetchLeads());
+  }, [dispatch, currentPage]);
+
+  const handleSearchChange = (query: string) => {
+    dispatch(setSearchQuery(query));
+    dispatch(fetchLeads());
+  };
+
+  const handleFilterChange = (newFilters: Partial<typeof filters>) => {
+    dispatch(setFilters(newFilters));
+    // Fetching will be triggered after filters state changes due to the middleware
+    dispatch(fetchLeads());
+  };
 
   const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
+    dispatch(setPage(pageNumber));
     window.scrollTo({ top: 0, behavior: "smooth" });
+    // Fetching will be triggered by the useEffect when currentPage changes
   };
 
   const handleRefresh = () => {
-    fetchLeads(currentPage);
+    dispatch(fetchLeads());
   };
 
   // Pagination component
@@ -120,7 +74,7 @@ const HomePage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center mt-4 mb-8">
         <div className="text-sm text-gray-500 mb-2">
-          Showing {leadData.length} of {totalLeads} leads
+          Showing {leads.length} of {totalLeads} leads
         </div>
 
         <div className="flex items-center">
@@ -200,13 +154,13 @@ const HomePage: React.FC = () => {
         <div className="bg-white shadow-sm p-4 m-4 rounded-lg">
           <SearchBar
             searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
+            setSearchQuery={handleSearchChange}
           />
         </div>
 
         <div className="bg-white shadow-sm p-4 m-4 rounded-lg">
           <div className="max-w-6xl mx-auto space-y-8">
-            <Filters filters={filters} setFilters={setFilters} />
+            <Filters filters={filters} setFilters={handleFilterChange} />
           </div>
         </div>
 
@@ -225,10 +179,16 @@ const HomePage: React.FC = () => {
           {error && (
             <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-md">
               {error}
+              <button
+                onClick={() => dispatch(clearError())}
+                className="ml-2 text-sm underline"
+              >
+                Dismiss
+              </button>
             </div>
           )}
 
-          <LeadsTable leads={leadData} />
+          <LeadsTable />
 
           {isLoading && (
             <div className="text-center py-4">
@@ -237,13 +197,13 @@ const HomePage: React.FC = () => {
             </div>
           )}
 
-          {!isLoading && leadData.length === 0 && !error && (
+          {!isLoading && leads.length === 0 && !error && (
             <div className="text-center py-4 text-gray-500">
               No leads found matching your criteria
             </div>
           )}
 
-          {leadData.length > 0 && <Pagination />}
+          {leads.length > 0 && <Pagination />}
         </div>
       </div>
     </div>

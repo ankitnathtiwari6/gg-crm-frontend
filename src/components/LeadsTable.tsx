@@ -1,7 +1,14 @@
 import React, { useState } from "react";
-import { Lead } from "../types";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../redux/store";
+import {
+  setSelectedLead,
+  selectLeads,
+  updateLead,
+} from "../redux/slices/leadsSlice";
 import LeadProfile from "./LeadProfile";
 import Chat from "./Chat";
+import CompactEditModal from "./CompactEditModal";
 
 // Helper functions for stage display
 const getStageLabel = (stage?: string): string => {
@@ -50,259 +57,31 @@ const getStageColor = (stage?: string): string => {
   }
 };
 
-// Edit Modal Component
-interface EditModalProps {
-  lead: Lead;
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (updatedLead: Lead) => void;
-}
-
-const EditModal: React.FC<EditModalProps> = ({
-  lead,
-  isOpen,
-  onClose,
-  onSave,
-}) => {
-  const [editedLead, setEditedLead] = useState<Lead>({ ...lead });
-  const [isLoading, setIsLoading] = useState(false);
-
-  if (!isOpen) return null;
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setEditedLead((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Here you would make an API call to update the lead
-      // For example:
-      // await axios.put(`/api/leads/${editedLead.id}`, editedLead);
-
-      onSave(editedLead);
-    } catch (error) {
-      console.error("Error updating lead:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Edit Lead</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={editedLead.name}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={editedLead.email}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                NEET Score
-              </label>
-              <input
-                type="text"
-                name="neetScore"
-                value={editedLead.neetScore}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Country
-              </label>
-              <input
-                type="text"
-                name="country"
-                value={editedLead.preferredCountry}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location
-              </label>
-              <input
-                type="text"
-                name="location"
-                value={editedLead.location}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                name="status"
-                value={editedLead.status}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stage
-              </label>
-              <select
-                name="stage"
-                value={editedLead.stage || "new"}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              >
-                <option value="new">New Lead</option>
-                <option value="not_responding">Not Responding</option>
-                <option value="call_started">Call Started</option>
-                <option value="follow_up">Follow Up</option>
-                <option value="documents_requested">Documents Requested</option>
-                <option value="documents_received">Documents Received</option>
-                <option value="application_submitted">
-                  Application Submitted
-                </option>
-                <option value="closed_won">Closed Won</option>
-                <option value="closed_lost">Closed Lost</option>
-              </select>
-            </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes
-              </label>
-              <textarea
-                name="notes"
-                value={editedLead.notes || ""}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tags (comma separated)
-              </label>
-              <input
-                type="text"
-                name="tags"
-                value={editedLead.tags ? editedLead.tags.join(", ") : ""}
-                onChange={(e) =>
-                  setEditedLead({
-                    ...editedLead,
-                    tags: e.target.value
-                      .split(",")
-                      .map((tag) => tag.trim())
-                      .filter(Boolean),
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-400 focus:ring-1 focus:ring-green-400"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
-            >
-              {isLoading ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 interface LeadsTableProps {
-  leads: Lead[];
   lastLeadElementRef?: (node: HTMLTableRowElement) => void;
 }
 
-export const LeadsTable: React.FC<LeadsTableProps> = ({
-  leads,
-  lastLeadElementRef,
-}) => {
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [currentLead, setCurrentLead] = useState<Lead | null>(null);
-  const [activeTab, setActiveTab] = useState<"profile" | "chat">("profile");
+const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
+  const dispatch = useDispatch<AppDispatch>();
 
-  const handleEditLead = (lead: Lead) => {
-    setCurrentLead(lead);
+  // Get leads from Redux
+  const leads = useSelector(selectLeads);
+  // Get selected lead ID from Redux
+  const selectedLeadId = useSelector(
+    (state: RootState) => state.leads.selectedLeadId
+  );
+  // Get current user for assignment
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"profile" | "chat">("profile");
+  const [showAssignPopup, setShowAssignPopup] = useState<string | null>(null);
+
+  // Find the currently selected lead
+  const currentLead = leads.find((lead) => lead.id === selectedLeadId) || null;
+
+  const handleEditLead = (leadId: string) => {
+    dispatch(setSelectedLead(leadId));
     setIsEditModalOpen(true);
   };
 
@@ -310,20 +89,37 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     setIsEditModalOpen(false);
   };
 
-  const handleSaveLead = (updatedLead: Lead) => {
-    // Here you would typically make an API call to update the lead
-    console.log("Saving updated lead:", updatedLead);
-    // For now, just close the modal
-    handleCloseModal();
-  };
-
-  const handleMouseEnter = (lead: Lead) => {
-    setCurrentLead(lead);
+  const handleMouseEnter = (leadId: string) => {
+    dispatch(setSelectedLead(leadId));
   };
 
   const handleCall = (phoneNumber: string, e: React.MouseEvent) => {
     e.stopPropagation();
     window.location.href = `tel:${phoneNumber}`;
+  };
+
+  const handleAssignToMe = (leadId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log(currentUser);
+
+    if (currentUser) {
+      const leadToUpdate = leads.find((lead) => lead.id === leadId);
+      if (leadToUpdate) {
+        const updatedLead = {
+          ...leadToUpdate,
+          assignedTo: { id: currentUser.id, name: currentUser.username },
+        };
+        dispatch(updateLead(updatedLead));
+      }
+    }
+    setShowAssignPopup(null);
+  };
+
+  const toggleAssignPopup = (leadId: string | null, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setShowAssignPopup(leadId === showAssignPopup ? null : leadId);
   };
 
   if (!leads || leads.length === 0) {
@@ -352,7 +148,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   Location
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  NEET
+                  Assigned To
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Activity
@@ -367,14 +163,14 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <tr
                   key={lead.id}
                   className={`hover:bg-gray-50 ${
-                    currentLead?.id === lead.id ? "bg-green-50" : ""
+                    selectedLeadId === lead.id ? "bg-green-50" : ""
                   }`}
                   ref={
                     index === leads.length - 1 && lastLeadElementRef
                       ? lastLeadElementRef
                       : null
                   }
-                  onMouseEnter={() => handleMouseEnter(lead)}
+                  onMouseEnter={() => handleMouseEnter(lead.id)}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center">
@@ -409,12 +205,70 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     <div className="text-xs text-gray-500">{lead.location}</div>
                   </td>
                   <td className="px-6 py-4">
-                    {typeof lead.neetScore === "number" ? (
-                      <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {lead.neetScore}
+                    {lead.assignedTo ? (
+                      <div className="text-sm text-gray-900 flex items-center">
+                        <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                          <span className="text-blue-800 text-xs font-medium">
+                            {lead.assignedTo.name.charAt(0)?.toUpperCase()}
+                          </span>
+                        </div>
+                        {lead.assignedTo.name}
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-500">N/A</span>
+                      <div>
+                        <button
+                          onClick={(e) => toggleAssignPopup(lead.id, e)}
+                          className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none"
+                        >
+                          + Assign
+                        </button>
+                        {showAssignPopup === lead.id && (
+                          <div className="absolute z-10 mt-1 w-48 bg-white rounded-md shadow-lg">
+                            <ul className="py-1">
+                              <li
+                                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
+                                onClick={(e) => handleAssignToMe(lead.id, e)}
+                              >
+                                <svg
+                                  className="w-4 h-4 mr-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                  />
+                                </svg>
+                                Assign to me
+                              </li>
+                              <li
+                                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
+                                onClick={() => setShowAssignPopup(null)}
+                              >
+                                <svg
+                                  className="w-4 h-4 mr-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                  />
+                                </svg>
+                                More options...
+                              </li>
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </td>
 
@@ -446,7 +300,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button
-                      onClick={() => handleEditLead(lead)}
+                      onClick={() => handleEditLead(lead.id)}
                       className="text-green-600 hover:text-green-900"
                     >
                       <svg
@@ -504,7 +358,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             activeTab === "profile" ? (
               <LeadProfile
                 lead={currentLead}
-                onEdit={() => handleEditLead(currentLead)}
+                onEdit={() => handleEditLead(currentLead.id)}
               />
             ) : (
               <Chat lead={currentLead} />
@@ -517,14 +371,14 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         </div>
       </div>
 
-      {currentLead && (
-        <EditModal
-          lead={currentLead}
-          isOpen={isEditModalOpen}
-          onClose={handleCloseModal}
-          onSave={handleSaveLead}
-        />
-      )}
+      {/* Edit Modal - Now only passing the leadId instead of the entire lead object */}
+      <CompactEditModal
+        leadId={selectedLeadId}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };
+
+export default LeadsTable;

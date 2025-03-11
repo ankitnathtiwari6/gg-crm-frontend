@@ -1,21 +1,25 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+// src/components/ProtectedRoute.tsx
+import { ReactNode } from "react";
+import { useSelector } from "react-redux";
+import { Navigate, useLocation } from "react-router-dom";
+import { RootState } from "../redux/store";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { token } = useAuth();
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const { isAuthenticated, token } = useSelector(
+    (state: RootState) => state.auth
+  );
 
-  // If there's no token, redirect to /login
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  const location = useLocation();
+
+  if (!isAuthenticated || !token) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // Otherwise, render the protected content
-  return <>{children}</>;
+  return children;
 };
 
 export default ProtectedRoute;

@@ -6,6 +6,21 @@ export interface Message {
   status?: "sent" | "delivered" | "read" | "failed";
 }
 
+export interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
+  token: string;
+  // Add additional user properties as needed
+}
+
+export interface AuthState {
+  user: AuthUser | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+}
 export interface Lead {
   id: string;
   leadPhoneNumber: string;
@@ -16,7 +31,7 @@ export interface Lead {
   preferredCountry?: string;
   city?: string;
   state?: string;
-  neetScore?: number;
+  neetScore?: number | null;
   numberOfEnquiry: number;
   numberOfChatsMessages: number;
   firstInteraction: Date;
@@ -27,6 +42,7 @@ export interface Lead {
   source?: string;
   notes?: string;
   chatHistory?: Message[];
+  assignedTo: { id: string; name: string } | null;
   createdAt?: Date;
   updatedAt?: Date;
 

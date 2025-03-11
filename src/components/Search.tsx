@@ -3,7 +3,8 @@ import { Search, X } from "lucide-react";
 
 interface SearchBarProps {
   searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  // Changed from React.Dispatch<React.SetStateAction<string>> to a more flexible function signature
+  setSearchQuery: (query: string) => void;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({

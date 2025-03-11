@@ -1,40 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useDispatch, useSelector } from "react-redux";
+import { login } from "../redux/slices/authSlice";
+import { RootState, AppDispatch } from "../redux/store";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
 
+  // Get auth state from Redux
+  const { loading, error, isAuthenticated } = useSelector(
+    (state: RootState) => state.auth
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Update local error state when Redux error changes
+  useEffect(() => {
+    if (error) {
+      setErrorMsg(error);
+    }
+  }, [error]);
+
+  // Redirect when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    try {
-      // Example: Call your backend login endpoint
-      const response = await fetch("http://localhost:4000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Invalid credentials");
-      }
-
-      const data = await response.json(); // e.g. { token: 'JWT_TOKEN_HERE' }
-
-      // Save token to context
-      login(data.token);
-
-      // Navigate to dashboard or home
-      navigate("/");
-    } catch (error: any) {
-      setErrorMsg(error.message || "Login failed");
-    }
+    setErrorMsg("");
+    dispatch(login({ email, password }));
   };
 
   return (
@@ -61,6 +60,7 @@ const LoginPage: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="example@domain.com"
               required
+              disabled={loading}
             />
           </div>
 
@@ -79,14 +79,44 @@ const LoginPage: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="********"
               required
+              disabled={loading}
             />
           </div>
 
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+            className={`${
+              loading ? "bg-blue-400" : "bg-blue-600"
+            } text-white px-4 py-2 rounded w-full flex justify-center items-center`}
+            disabled={loading}
           >
-            Login
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Logging in...
+              </>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
       </div>
