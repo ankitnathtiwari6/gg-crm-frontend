@@ -176,15 +176,15 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
                         <span className="text-green-800 font-medium">
-                          {lead.name?.charAt(0)?.toUpperCase() || "?"}
+                          {lead?.name?.charAt(0)?.toUpperCase() || "?"}
                         </span>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
-                          {lead.name || "Unknown"}
+                          {lead?.name || "Unknown"}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {lead.source || "WhatsApp"}
+                          {lead?.source || "WhatsApp"}
                         </div>
                       </div>
                     </div>
@@ -194,25 +194,25 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                       className="text-sm text-blue-600 cursor-pointer hover:underline"
                       onClick={(e) => handleCall(lead.leadPhoneNumber, e)}
                     >
-                      {lead.leadPhoneNumber}
+                      {lead?.leadPhoneNumber}
                     </div>
                     <div className="text-xs text-gray-500">{lead.email}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900">
-                      {lead.preferredCountry}
+                      {lead?.preferredCountry}
                     </div>
                     <div className="text-xs text-gray-500">{lead.location}</div>
                   </td>
                   <td className="px-6 py-4">
-                    {lead.assignedTo ? (
+                    {lead?.assignedTo ? (
                       <div className="text-sm text-gray-900 flex items-center">
                         <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                           <span className="text-blue-800 text-xs font-medium">
-                            {lead.assignedTo.name.charAt(0)?.toUpperCase()}
+                            {lead?.assignedTo?.name?.charAt(0)?.toUpperCase()}
                           </span>
                         </div>
-                        {lead.assignedTo.name}
+                        {lead?.assignedTo?.name}
                       </div>
                     ) : (
                       <div>
