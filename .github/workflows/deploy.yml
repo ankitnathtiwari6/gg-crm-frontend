@@ -3,7 +3,7 @@ name: Deploy React Vite App
 on:
   push:
     branches:
-      - master # Change if your default branch is different
+      - master #sds Change if your default branch is different
 
 jobs:
   build:
