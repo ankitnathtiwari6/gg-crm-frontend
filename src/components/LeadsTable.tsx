@@ -10,6 +10,20 @@ import LeadProfile from "./LeadProfile";
 import Chat from "./Chat";
 import CompactEditModal from "./CompactEditModal";
 
+const getTagColor = (index: number): string => {
+  const colors = [
+    "bg-blue-100 text-blue-800",
+    "bg-green-100 text-green-800",
+    "bg-yellow-100 text-yellow-800",
+    "bg-purple-100 text-purple-800",
+    "bg-pink-100 text-pink-800",
+    "bg-indigo-100 text-indigo-800",
+    "bg-red-100 text-red-800",
+    "bg-teal-100 text-teal-800",
+  ];
+  return colors[index % colors.length];
+};
+
 // Helper functions for stage display
 const getStageLabel = (stage?: string): string => {
   switch (stage) {
@@ -151,7 +165,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                   Assigned To
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Activity
+                  Tags
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                   Edit
@@ -254,18 +268,18 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
 
                   <td className="px-6 py-4">
                     <div className="flex flex-col space-y-1">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${
-                            lead.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : lead.status === "inactive"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                      >
-                        {lead.status}
-                      </span>
+                      {lead.tags && lead.tags.length > 0
+                        ? lead.tags.map((tag, tagIndex) => (
+                            <span
+                              key={tagIndex}
+                              className={`px-2 py-1 rounded-full text-xs ${getTagColor(
+                                tagIndex
+                              )}`}
+                            >
+                              {tag}
+                            </span>
+                          ))
+                        : null}
 
                       {lead.stage && (
                         <span
