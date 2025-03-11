@@ -23,7 +23,7 @@ function App() {
   }, [token, dispatch]);
 
   return (
-    <Router>
+    <Router basename="/gg-crm-frontend">
       <Routes>
         {/* Public Route (Login) */}
         <Route path="/login" element={<LoginPage />} />
