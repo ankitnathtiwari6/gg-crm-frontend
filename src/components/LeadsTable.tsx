@@ -154,7 +154,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                   Activity
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                  Actions
+                  Edit
                 </th>
               </tr>
             </thead>
@@ -162,7 +162,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
               {leads.map((lead, index) => (
                 <tr
                   key={lead.id}
-                  className={`hover:bg-gray-50 ${
+                  className={`hover:bg-gray-50 cursor-pointer ${
                     selectedLeadId === lead.id ? "bg-green-50" : ""
                   }`}
                   ref={
@@ -170,7 +170,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                       ? lastLeadElementRef
                       : null
                   }
-                  onMouseEnter={() => handleMouseEnter(lead.id)}
+                  onClick={() => handleMouseEnter(lead.id)}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center">
@@ -205,7 +205,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                     <div className="text-xs text-gray-500">{lead.location}</div>
                   </td>
                   <td className="px-6 py-4">
-                    {lead?.assignedTo ? (
+                    {lead?.assignedTo?.id ? (
                       <div className="text-sm text-gray-900 flex items-center">
                         <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
                           <span className="text-blue-800 text-xs font-medium">
@@ -218,7 +218,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                       <div>
                         <button
                           onClick={(e) => toggleAssignPopup(lead.id, e)}
-                          className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none"
+                          className="cursor-pointer px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none"
                         >
                           + Assign
                         </button>
@@ -244,26 +244,6 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                                   />
                                 </svg>
                                 Assign to me
-                              </li>
-                              <li
-                                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
-                                onClick={() => setShowAssignPopup(null)}
-                              >
-                                <svg
-                                  className="w-4 h-4 mr-2"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                  />
-                                </svg>
-                                More options...
                               </li>
                             </ul>
                           </div>

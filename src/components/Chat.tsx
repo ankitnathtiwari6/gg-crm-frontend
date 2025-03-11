@@ -16,7 +16,6 @@ const Chat: React.FC<ChatProps> = ({ lead }) => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [initialRender, setInitialRender] = useState(true);
 
   // Update messages when lead changes
 
@@ -27,19 +26,6 @@ const Chat: React.FC<ChatProps> = ({ lead }) => {
       setMessages([]);
     }
   }, [lead]);
-
-  useEffect(() => {
-    // Only scroll to bottom when new messages are added, not on initial render
-    if (!initialRender) {
-      scrollToBottom();
-    } else {
-      setInitialRender(false);
-    }
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
   if (!lead)
     return (
