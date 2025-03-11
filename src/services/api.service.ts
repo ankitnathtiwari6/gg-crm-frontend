@@ -98,8 +98,9 @@ export const leadService = {
   getLeadById: (id: string, token: string): any =>
     apiRequest(`${endpoints.leads.getOne}/${id}`, "GET", undefined, token),
 
-  updateLead: (id: string, data: any, token: string): any =>
-    apiRequest(`${endpoints.leads.update}/${id}`, "PUT", data, token),
+  updateLead: (id: string, data: any, token: string): any => {
+    return apiRequest(`${endpoints.leads.update}/${id}`, "PUT", data, token);
+  },
 };
 
 // Export a default API object that contains all services

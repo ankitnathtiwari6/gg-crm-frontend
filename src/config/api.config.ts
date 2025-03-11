@@ -74,7 +74,7 @@ export const endpoints = {
     getAll: "/leads",
     getOne: "/leads/:id",
     create: "/leads",
-    update: "/leads/:id",
+    update: "/leads/",
     delete: "/leads/:id",
   },
 };

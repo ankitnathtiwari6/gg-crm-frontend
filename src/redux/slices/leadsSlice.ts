@@ -139,22 +139,25 @@ export const fetchLeads = createAsyncThunk(
 // New async thunk for updating a lead
 export const updateLead = createAsyncThunk(
   "leads/updateLead",
-  async (lead: Lead, { rejectWithValue }) => {
+  async (lead: Lead, { getState, rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_URL}/leads/${lead.id}`, lead);
+      const state = getState() as RootState;
 
-      if (response.data.success) {
-        return response.data.lead;
+      const response = await api.lead.updateLead(
+        lead.id,
+        lead,
+        state?.auth?.token ?? ""
+      );
+      //   const response = await axios.put(`${API_URL}/leads/${lead.id}`, lead);
+
+      if (response.success) {
+        return response.lead;
       } else {
-        return rejectWithValue(
-          response.data.message || "Failed to update lead"
-        );
+        return rejectWithValue(response.message || "Failed to update lead");
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        return rejectWithValue(
-          error.response.data.message || "An error occurred"
-        );
+        return rejectWithValue("An error occurred in update");
       }
       return rejectWithValue("Failed to update lead. Please try again.");
     }
