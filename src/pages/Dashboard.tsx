@@ -7,7 +7,6 @@ import {
 } from "react-icons/fa";
 import { BsChatSquareDots } from "react-icons/bs";
 import { MdOutlineSchool } from "react-icons/md";
-import axios from "axios";
 import Sidebar from "../components/Sidebar";
 
 // Metric Card Component - Streamlined for better vertical space usage
@@ -166,7 +165,7 @@ const Dashboard: React.FC = () => {
     enrollments: 0,
   });
 
-  const [stageData, setStageData] = useState<StageData[]>([
+  const [stageData] = useState<StageData[]>([
     { stage: "New Lead", count: 42, color: "bg-blue-500" },
     { stage: "Not Responding", count: 28, color: "bg-yellow-500" },
     { stage: "Call Started", count: 35, color: "bg-indigo-500" },
@@ -176,7 +175,7 @@ const Dashboard: React.FC = () => {
     { stage: "Closed Lost", count: 15, color: "bg-red-500" },
   ]);
 
-  const [activities, setActivities] = useState<Activity[]>([
+  const [activities] = useState<Activity[]>([
     {
       id: "1",
       type: "call",

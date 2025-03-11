@@ -25,8 +25,7 @@ const HomePage: React.FC = () => {
   const isLoading = useSelector(selectIsLoading);
   const error = useSelector(selectError);
   const filters = useSelector(selectFilters);
-  const { currentPage, totalPages, totalLeads, itemsPerPage } =
-    useSelector(selectPagination);
+  const { currentPage, totalPages, totalLeads } = useSelector(selectPagination);
   const { searchQuery } = useSelector(selectLeadsState);
 
   // Fetch leads when page or filters change

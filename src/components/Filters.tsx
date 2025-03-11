@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import apiConfig from "../config/api.config";
+import React from "react";
+
 import { TAG_OPTIONS } from "./CompactEditModal";
 
 interface FilterValues {
@@ -23,10 +22,6 @@ interface FiltersProps {
 }
 
 // User interface for assignedTo dropdown
-interface User {
-  _id: string;
-  name: string;
-}
 
 // Predefined tag options for filtering
 

@@ -14,7 +14,7 @@ interface AuthWrapperProps {
 
 const AuthWrapper = ({ children }: AuthWrapperProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { token, loading } = useSelector((state: RootState) => state.auth);
+  const { token } = useSelector((state: RootState) => state.auth);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {

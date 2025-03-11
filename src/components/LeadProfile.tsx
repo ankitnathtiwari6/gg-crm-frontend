@@ -48,19 +48,6 @@ const getStageColor = (stage?: string): string => {
   }
 };
 
-const formatDate = (date: string) => {
-  try {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch (error) {
-    console.error("Invalid date string:", date);
-    return "Invalid Date";
-  }
-};
-
 // Elegant Lead Profile Component
 interface LeadProfileProps {
   lead: Lead | null;

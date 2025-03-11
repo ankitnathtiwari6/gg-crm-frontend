@@ -121,7 +121,7 @@ const Chat: React.FC<ChatProps> = ({ lead }) => {
         }}
       >
         {messageGroups.length > 0 ? (
-          messageGroups.map((group, groupIndex) => (
+          messageGroups.map((group) => (
             <div key={group.date} className="space-y-2">
               {/* Date divider */}
               <div className="flex justify-center mb-3">
