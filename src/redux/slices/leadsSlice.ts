@@ -2,10 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { Lead } from "../../types";
 import { RootState } from "../store";
-import apiConfig from "../../config/api.config";
 import api from "../../services/api.service";
-
-const API_URL = apiConfig.baseUrl;
 
 // Define filter state interface
 export interface LeadsFilters {
