@@ -23,6 +23,7 @@ export interface LeadsFilters {
 interface LeadsState {
   leads: Lead[];
   totalLeads: number;
+  todayLeadsCount: number; // Added todayLeadsCount field
   totalPages: number;
   currentPage: number;
   itemsPerPage: number;
@@ -37,6 +38,7 @@ interface LeadsState {
 const initialState: LeadsState = {
   leads: [],
   totalLeads: 0,
+  todayLeadsCount: 0, // Initialize todayLeadsCount
   totalPages: 1,
   currentPage: 1,
   itemsPerPage: 20,
@@ -67,25 +69,19 @@ export const fetchLeads = createAsyncThunk(
     const { currentPage, itemsPerPage, searchQuery, filters } = state.leads;
 
     try {
-      // Build params object directly rather than using URLSearchParams
       const params: Record<string, any> = {
         page: currentPage,
         limit: itemsPerPage,
       };
-
-      // Search query
       if (searchQuery) params.search = searchQuery;
 
-      // NEET status filtering
       if (filters.neetStatus) params.neetStatus = filters.neetStatus;
 
-      // NEET score range
       if (filters.neetScoreRange[0] > 0)
         params.minScore = filters.neetScoreRange[0];
       if (filters.neetScoreRange[1] < 720)
         params.maxScore = filters.neetScoreRange[1];
 
-      // Location filters
       if (filters.country) params.country = filters.country;
       if (filters.location) params.location = filters.location;
 
@@ -118,6 +114,7 @@ export const fetchLeads = createAsyncThunk(
           leads: response.leads,
           totalPages: response.totalPages,
           totalLeads: response.totalLeads,
+          todayLeadsCount: response.todayLeadsCount, // Extract todayLeadsCount from response
         };
       } else {
         return rejectWithValue(response.message || "Failed to fetch leads");
@@ -221,6 +218,7 @@ const leadsSlice = createSlice({
         state.leads = action.payload.leads;
         state.totalPages = action.payload.totalPages;
         state.totalLeads = action.payload.totalLeads;
+        state.todayLeadsCount = action.payload.todayLeadsCount; // Store todayLeadsCount in state
       })
       .addCase(fetchLeads.rejected, (state, action) => {
         state.isLoading = false;
@@ -287,6 +285,8 @@ export const selectPagination = (state: RootState) => ({
   totalLeads: state.leads.totalLeads,
   itemsPerPage: state.leads.itemsPerPage,
 });
+export const selectTodayLeadsCount = (state: RootState) =>
+  state.leads.todayLeadsCount; // New selector for today's leads count
 
 // Export reducer
 export default leadsSlice.reducer;

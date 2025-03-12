@@ -9,6 +9,7 @@ import {
 import LeadProfile from "./LeadProfile";
 import Chat from "./Chat";
 import CompactEditModal from "./CompactEditModal";
+import moment from "moment";
 
 const getTagColor = (index: number): string => {
   const colors = [
@@ -69,6 +70,12 @@ const getStageColor = (stage?: string): string => {
     default:
       return "bg-blue-100 text-blue-800";
   }
+};
+
+// Format the createdAt time in a relative format
+const formatCreatedAt = (createdAt?: string | Date): string => {
+  if (!createdAt) return "Unknown";
+  return moment(createdAt).fromNow(); // This will return strings like "2 minutes ago", "3 days ago", etc.
 };
 
 interface LeadsTableProps {
@@ -166,6 +173,9 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Tags
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Created
                 </th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
                   Edit
@@ -292,6 +302,13 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                       )}
                     </div>
                   </td>
+
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-500 whitespace-nowrap">
+                      {formatCreatedAt(lead.createdAt)}
+                    </div>
+                  </td>
+
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={() => handleEditLead(lead.id)}

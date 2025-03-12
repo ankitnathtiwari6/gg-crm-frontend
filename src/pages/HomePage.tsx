@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Sidebar from "../components/Sidebar";
 import LeadsTable from "../components/LeadsTable";
+import LeadStats from "../components/LeadStats"; // Import the new component
 import { Filters } from "../components/Filters";
 import { SearchBar } from "../components/Search";
 import {
@@ -16,6 +17,7 @@ import {
   selectError,
   selectFilters,
   selectPagination,
+  selectTodayLeadsCount,
 } from "../redux/slices/leadsSlice";
 import { AppDispatch } from "../redux/store";
 
@@ -27,6 +29,7 @@ const HomePage: React.FC = () => {
   const filters = useSelector(selectFilters);
   const { currentPage, totalPages, totalLeads } = useSelector(selectPagination);
   const { searchQuery } = useSelector(selectLeadsState);
+  const todayLeadsCount = useSelector(selectTodayLeadsCount); // Get todayLeadsCount from Redux store
 
   // Fetch leads when page or filters change
   useEffect(() => {
@@ -157,6 +160,8 @@ const HomePage: React.FC = () => {
           />
         </div>
 
+        {/* Lead Stats Section */}
+
         <div className="bg-white shadow-sm p-4 m-4 rounded-lg">
           <div className="max-w-6xl mx-auto space-y-8">
             <Filters filters={filters} setFilters={handleFilterChange} />
@@ -165,7 +170,8 @@ const HomePage: React.FC = () => {
 
         <div className="p-4 flex-1">
           <div className="mb-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold">All Leads</h1>
+            <LeadStats totalLeads={totalLeads} todayLeads={todayLeadsCount} />
+
             <button
               onClick={handleRefresh}
               disabled={isLoading}
