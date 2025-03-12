@@ -1,5 +1,6 @@
 import React from "react";
 import { Lead } from "../types"; // Adjust the import path as needed
+import moment from "moment"; // Import moment
 
 // Helper functions for stage display
 const getStageLabel = (stage?: string): string => {
@@ -46,6 +47,12 @@ const getStageColor = (stage?: string): string => {
     default:
       return "bg-blue-50 text-blue-700 border-blue-200";
   }
+};
+
+// Format date using moment
+const formatDate = (dateString: string | Date | undefined): string => {
+  if (!dateString) return "N/A";
+  return moment(dateString).format("MMM DD, YYYY [at] h:mm A"); // Format: Mar 12, 2025 at 2:30 PM
 };
 
 // Elegant Lead Profile Component
@@ -183,39 +190,6 @@ const ElegantLeadProfile: React.FC<LeadProfileProps> = ({ lead, onEdit }) => {
           </div>
         </div>
 
-        {/* Communication Status */}
-        <div className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
-          <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2">
-            Communication
-          </h3>
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs text-gray-500">Last Seen</p>
-              <div className="flex items-center">
-                <svg
-                  className="w-3 h-3 text-gray-400 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Timeline Card */}
         <div className="bg-white p-3 rounded-md shadow-sm border border-gray-100">
           <h3 className="text-xs uppercase text-gray-500 font-semibold mb-2">
@@ -225,39 +199,17 @@ const ElegantLeadProfile: React.FC<LeadProfileProps> = ({ lead, onEdit }) => {
             <div>
               <p className="text-xs text-gray-500">Captured</p>
               <div className="flex items-center">
-                <svg
-                  className="w-3 h-3 text-gray-400 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <p className="font-medium">{String(lead.createdAt)}</p>
+                <p className="font-medium text-sm">
+                  {formatDate(lead.createdAt)}
+                </p>
               </div>
             </div>
             <div>
               <p className="text-xs text-gray-500">Last Updated</p>
               <div className="flex items-center">
-                <svg
-                  className="w-3 h-3 text-gray-400 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <p className="font-medium">{String(lead?.updatedAt)}</p>
+                <p className="font-medium text-sm">
+                  {formatDate(lead?.updatedAt)}
+                </p>
               </div>
             </div>
           </div>

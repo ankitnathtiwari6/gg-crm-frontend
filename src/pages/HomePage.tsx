@@ -148,8 +148,8 @@ const HomePage: React.FC = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
-
-      <div className="flex-1 flex flex-col">
+      {/* Main content with left margin to accommodate the fixed sidebar */}
+      <div className="flex-1 flex flex-col ml-20 transition-all duration-300">
         <div className="bg-white shadow-sm p-4 m-4 rounded-lg">
           <SearchBar
             searchQuery={searchQuery}
@@ -163,7 +163,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 flex-1 overflow-y-auto">
+        <div className="p-4 flex-1">
           <div className="mb-4 flex justify-between items-center">
             <h1 className="text-2xl font-bold">All Leads</h1>
             <button
@@ -201,9 +201,8 @@ const HomePage: React.FC = () => {
               No leads found matching your criteria
             </div>
           )}
-
-          {leads.length > 0 && <Pagination />}
         </div>
+        <div className="my-2">{leads.length > 0 && <Pagination />}</div>
       </div>
     </div>
   );

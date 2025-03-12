@@ -295,7 +295,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={() => handleEditLead(lead.id)}
-                      className="text-green-600 hover:text-green-900"
+                      className="text-green-600 hover:text-green-900 cursor-pointer"
                     >
                       <svg
                         className="w-5 h-5"
