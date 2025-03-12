@@ -152,7 +152,7 @@ const HomePage: React.FC = () => {
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
       {/* Main content with left margin to accommodate the fixed sidebar */}
-      <div className="flex-1 flex flex-col ml-20 transition-all duration-300">
+      <div className="flex-1 flex flex-col md:ml-20 transition-all duration-300">
         <div className="bg-white shadow-sm p-4 m-4 rounded-lg">
           <SearchBar
             searchQuery={searchQuery}

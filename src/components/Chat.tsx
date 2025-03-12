@@ -36,25 +36,9 @@ const Chat: React.FC<ChatProps> = ({ lead }) => {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
-
-    // Create a new message
-    const newMessage: Message = {
-      messageId: Date.now().toString(),
-      content: message,
-      role: "assistant",
-      timestamp: new Date(),
-      status: "sent",
-    };
-
-    // Add message to the messages array
-    setMessages([...messages, newMessage]);
-
-    // Clear the input
-    setMessage("");
 
     // Here you would also want to call an API to actually send the message
-    console.log("Sending message:", newMessage);
+    console.log("Sending message:");
   };
 
   // Group messages by date
@@ -117,13 +101,13 @@ const Chat: React.FC<ChatProps> = ({ lead }) => {
               </div>
 
               {/* Messages for this date */}
-              {group.messages.map((msg) => {
+              {group.messages.map((msg, i) => {
                 // Format timestamp using moment
                 const messageTime = moment(msg.timestamp).format("h:mm A");
 
                 return (
                   <div
-                    key={msg.messageId}
+                    key={i}
                     className={`flex ${
                       msg.role === "lead" ? "justify-start" : "justify-end"
                     }`}
