@@ -122,7 +122,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
 
   const handleCall = (phoneNumber: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    window.location.href = `tel:${phoneNumber}`;
+    window.location.href = `tel:+${phoneNumber}`;
   };
 
   const handleAssignToMe = (leadId: string, e: React.MouseEvent) => {

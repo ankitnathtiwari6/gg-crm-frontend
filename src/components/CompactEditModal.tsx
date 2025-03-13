@@ -2,13 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
 import { Lead } from "../types";
-
-// You'll need to create this slice action
-// This is a placeholder for the actual updateLead action you'll implement
 import { updateLead } from "../redux/slices/leadsSlice";
 
 interface EditModalProps {
-  leadId: string | null; // Only need ID to fetch from Redux
+  leadId: string | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -90,7 +87,8 @@ const CompactEditModal: React.FC<EditModalProps> = ({
 
     try {
       // Dispatch Redux action to update the lead
-      await dispatch(updateLead(editedLead));
+      const result = await dispatch(updateLead(editedLead)).unwrap();
+      console.log("Lead updated successfully:", result);
       onClose();
     } catch (error) {
       console.error("Error updating lead:", error);
@@ -133,6 +131,7 @@ const CompactEditModal: React.FC<EditModalProps> = ({
                 : "text-gray-500"
             }`}
             onClick={() => setActiveTab("basic")}
+            type="button"
           >
             Basic Info
           </button>
@@ -143,12 +142,17 @@ const CompactEditModal: React.FC<EditModalProps> = ({
                 : "text-gray-500"
             }`}
             onClick={() => setActiveTab("additional")}
+            type="button"
           >
             Additional Info
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+        <form
+          id="lead-edit-form"
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto"
+        >
           {activeTab === "basic" && (
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -353,25 +357,24 @@ const CompactEditModal: React.FC<EditModalProps> = ({
               </div>
             </div>
           )}
-        </form>
 
-        <div className="flex justify-end gap-2 mt-4 pt-2 border-t">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            form="lead-edit-form"
-            disabled={isLoading}
-            className="px-4 py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
-          >
-            {isLoading ? "Saving..." : "Save"}
-          </button>
-        </div>
+          <div className="flex justify-end gap-2 mt-4 pt-2 border-t">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-4 py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+            >
+              {isLoading ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

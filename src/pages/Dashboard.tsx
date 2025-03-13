@@ -242,7 +242,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-white shadow-sm px-6 py-4">
