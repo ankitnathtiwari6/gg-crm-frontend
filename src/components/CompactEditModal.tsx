@@ -86,9 +86,7 @@ const CompactEditModal: React.FC<EditModalProps> = ({
     if (!editedLead) return;
 
     try {
-      // Dispatch Redux action to update the lead
-      const result = await dispatch(updateLead(editedLead)).unwrap();
-      console.log("Lead updated successfully:", result);
+      dispatch(updateLead(editedLead));
       onClose();
     } catch (error) {
       console.error("Error updating lead:", error);
@@ -187,7 +185,6 @@ const CompactEditModal: React.FC<EditModalProps> = ({
                     Email
                   </label>
                   <input
-                    type="email"
                     name="email"
                     value={editedLead.email || ""}
                     onChange={handleChange}

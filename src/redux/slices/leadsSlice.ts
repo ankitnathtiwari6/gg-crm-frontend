@@ -142,7 +142,6 @@ export const updateLead = createAsyncThunk(
         lead,
         state?.auth?.token ?? ""
       );
-      //   const response = await axios.put(`${API_URL}/leads/${lead.id}`, lead);
 
       if (response.success) {
         return response.lead;
@@ -234,14 +233,23 @@ const leadsSlice = createSlice({
       .addCase(updateLead.fulfilled, (state, action) => {
         state.isLoading = false;
 
-        // Update the lead in the state
-        const updatedLead = action.payload;
-        const index = state.leads.findIndex(
-          (lead) => lead.id === updatedLead.id
+        // Create a completely new leads array to guarantee re-rendering
+        const updatedLead = { ...action.payload }; // Create a new reference
+
+        // Replace the entire leads array with a new array
+        const newLeads = state.leads.map((lead) =>
+          lead.id === updatedLead.id ? updatedLead : lead
         );
 
-        if (index !== -1) {
-          state.leads[index] = updatedLead;
+        // Assign the new array to state.leads
+        state.leads = newLeads;
+
+        // If this lead is currently selected, refresh the selectedLeadId to trigger re-renders
+        if (state.selectedLeadId === updatedLead.id) {
+          // This hack forces components relying on selectedLeadId to re-render
+          state.selectedLeadId = null;
+          // Immediately set it back to the original value
+          state.selectedLeadId = updatedLead.id;
         }
       })
       .addCase(updateLead.rejected, (state, action) => {
