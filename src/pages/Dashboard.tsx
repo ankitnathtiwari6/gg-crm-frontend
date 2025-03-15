@@ -7,7 +7,6 @@ import {
 } from "react-icons/fa";
 import { BsChatSquareDots } from "react-icons/bs";
 import { MdOutlineSchool } from "react-icons/md";
-import Sidebar from "../components/Sidebar";
 
 // Metric Card Component - Streamlined for better vertical space usage
 interface MetricCardProps {
