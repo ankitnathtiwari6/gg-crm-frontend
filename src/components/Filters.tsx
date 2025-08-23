@@ -38,6 +38,10 @@ const user = [
     _id: "67ced4c72fe58c7016c2748d",
     name: "Ankit",
   },
+  {
+    _id: "68a97910c3271bbae187ab0e",
+    name: "Pratiksha",
+  },
 ];
 
 export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {

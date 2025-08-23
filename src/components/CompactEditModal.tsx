@@ -21,6 +21,8 @@ export const TAG_OPTIONS = [
   "Invalid Phone Number",
   "Invalid Whatsapp Number",
   "Will Tell Later",
+  "Next Year",
+  "India Enquiry",
   "Junk",
 ];
 
@@ -52,7 +54,6 @@ const CompactEditModal: React.FC<EditModalProps> = ({
   }, [currentLead, isOpen]);
 
   if (!isOpen || !editedLead) return null;
-
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -87,7 +88,6 @@ const CompactEditModal: React.FC<EditModalProps> = ({
 
     try {
       dispatch(updateLead(editedLead));
-      onClose();
     } catch (error) {
       console.error("Error updating lead:", error);
     }
