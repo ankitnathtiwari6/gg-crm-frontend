@@ -42,7 +42,7 @@ const stagingConfig: ApiConfig = {
 // Select the appropriate configuration based on the environment
 // Uses Node's environment variables
 const getConfig = (): ApiConfig => {
-  const env: string = "production";
+  const env: string = "development";
 
   switch (env) {
     case "development":

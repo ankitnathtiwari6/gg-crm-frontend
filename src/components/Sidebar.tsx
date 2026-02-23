@@ -1,13 +1,24 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../redux/store";
+import { logout } from "../redux/slices/authSlice";
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.auth);
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
   };
 
   const toggleSidebar = () => {
@@ -174,20 +185,44 @@ const Sidebar: React.FC = () => {
 
       <div className="p-4 border-t border-gray-800">
         {collapsed ? (
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-blue-700 flex items-center justify-center">
-              <span className="text-white font-medium">U</span>
+              <span className="text-white font-medium">
+                {user?.username?.[0]?.toUpperCase() ?? "U"}
+              </span>
             </div>
+            <button
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-white focus:outline-none"
+              title="Logout"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
           </div>
         ) : (
-          <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-full bg-blue-700 flex items-center justify-center">
-              <span className="text-white font-medium">U</span>
+          <div>
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="h-8 w-8 rounded-full bg-blue-700 flex items-center justify-center">
+                <span className="text-white font-medium">
+                  {user?.username?.[0]?.toUpperCase() ?? "U"}
+                </span>
+              </div>
+              <div className="text-sm">
+                <p className="text-gray-300">{user?.username ?? "User"}</p>
+                <p className="text-xs text-gray-400">{user?.email ?? ""}</p>
+              </div>
             </div>
-            <div className="text-sm">
-              <p className="text-gray-300">User</p>
-              <p className="text-xs text-gray-400">user@example.com</p>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-red-600 hover:text-white rounded-md transition-colors duration-200"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
           </div>
         )}
       </div>
@@ -270,15 +305,26 @@ const Sidebar: React.FC = () => {
           </nav>
 
           <div className="p-4 border-t border-gray-800">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 mb-3">
               <div className="h-8 w-8 rounded-full bg-blue-700 flex items-center justify-center">
-                <span className="text-white font-medium">U</span>
+                <span className="text-white font-medium">
+                  {user?.username?.[0]?.toUpperCase() ?? "U"}
+                </span>
               </div>
               <div className="text-sm">
-                <p className="text-gray-300">User</p>
-                <p className="text-xs text-gray-400">user@example.com</p>
+                <p className="text-gray-300">{user?.username ?? "User"}</p>
+                <p className="text-xs text-gray-400">{user?.email ?? ""}</p>
               </div>
             </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-red-600 hover:text-white rounded-md transition-colors duration-200"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
           </div>
         </div>
       </div>
