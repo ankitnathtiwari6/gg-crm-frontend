@@ -40,19 +40,17 @@ const stagingConfig: ApiConfig = {
 };
 
 // Select the appropriate configuration based on the environment
-// Uses Node's environment variables
 const getConfig = (): ApiConfig => {
-  const env: string = "development";
+  const env: string = import.meta.env.VITE_APP_ENV ?? "production";
 
   switch (env) {
     case "development":
       return devConfig;
-    case "production":
-      return prodConfig;
     case "staging":
       return stagingConfig;
+    case "production":
     default:
-      return devConfig; // Default to development
+      return prodConfig;
   }
 };
 
