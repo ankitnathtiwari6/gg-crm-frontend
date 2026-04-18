@@ -75,4 +75,7 @@ export const endpoints = {
     update: "/leads/",
     delete: "/leads/:id",
   },
+  companies: {
+    base: "/companies",
+  },
 };

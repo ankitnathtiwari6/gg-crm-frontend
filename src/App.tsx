@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import LeadDetailPage from "./pages/LeadDetailPage";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
+import CompanySettingsPage from "./pages/CompanySettingsPage";
 import { useDispatch, useSelector } from "react-redux";
 // import ProtectedRoute from "./components/ProtectedRoute";
 import { AppDispatch, RootState } from "./redux/store";
@@ -56,6 +57,17 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <LeadDetailPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <CompanySettingsPage />
               </Layout>
             </ProtectedRoute>
           }

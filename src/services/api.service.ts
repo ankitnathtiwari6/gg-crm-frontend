@@ -103,10 +103,38 @@ export const leadService = {
   },
 };
 
+// Company service
+export const companyService = {
+  createCompany: (name: string, token: string): any =>
+    apiRequest(`${endpoints.companies.base}`, "POST", { name }, token),
+
+  getCompany: (id: string, token: string): any =>
+    apiRequest(`${endpoints.companies.base}/${id}`, "GET", undefined, token),
+
+  updateCompany: (id: string, data: any, token: string): any =>
+    apiRequest(`${endpoints.companies.base}/${id}`, "PUT", data, token),
+
+  addUser: (id: string, email: string, role: string, token: string): any =>
+    apiRequest(`${endpoints.companies.base}/${id}/users`, "POST", { email, role }, token),
+
+  removeUser: (id: string, userId: string, token: string): any =>
+    apiRequest(`${endpoints.companies.base}/${id}/users/${userId}`, "DELETE", undefined, token),
+
+  addWhatsapp: (id: string, data: any, token: string): any =>
+    apiRequest(`${endpoints.companies.base}/${id}/whatsapp`, "POST", data, token),
+
+  removeWhatsapp: (id: string, phoneNumberId: string, token: string): any =>
+    apiRequest(`${endpoints.companies.base}/${id}/whatsapp/${phoneNumberId}`, "DELETE", undefined, token),
+
+  toggleWhatsapp: (id: string, phoneNumberId: string, token: string): any =>
+    apiRequest(`${endpoints.companies.base}/${id}/whatsapp/${phoneNumberId}/toggle`, "PATCH", undefined, token),
+};
+
 // Export a default API object that contains all services
 const api = {
   auth: authService,
   lead: leadService,
+  company: companyService,
 };
 
 export default api;
