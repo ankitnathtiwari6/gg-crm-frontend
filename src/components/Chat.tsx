@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Lead, Message } from "../types";
 import moment from "moment";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { leadService } from "../services/api.service";
 
 interface ChatProps {
   lead: Lead | null;
@@ -15,17 +18,23 @@ interface MessageGroup {
 const Chat: React.FC<ChatProps> = ({ lead }) => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [loadingChat, setLoadingChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const token = useSelector((state: RootState) => state.auth.token) ?? "";
 
-  // Update messages when lead changes
-
+  // Fetch real chat history from ChatHistory collection when lead changes
   useEffect(() => {
-    if (lead?.chatHistory) {
-      setMessages(lead.chatHistory);
-    } else {
+    if (!lead?.id) {
       setMessages([]);
+      return;
     }
-  }, [lead]);
+    setLoadingChat(true);
+    leadService
+      .getChatHistory(lead.id, token)
+      .then((msgs) => setMessages(msgs))
+      .catch(() => setMessages(lead.chatHistory ?? []))
+      .finally(() => setLoadingChat(false));
+  }, [lead?.id]);
 
   if (!lead)
     return (
@@ -90,7 +99,11 @@ const Chat: React.FC<ChatProps> = ({ lead }) => {
           backgroundRepeat: "repeat",
         }}
       >
-        {messageGroups.length > 0 ? (
+        {loadingChat ? (
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+            Loading messages…
+          </div>
+        ) : messageGroups.length > 0 ? (
           messageGroups.map((group) => (
             <div key={group.date} className="space-y-2">
               {/* Date divider */}
@@ -155,6 +168,7 @@ const Chat: React.FC<ChatProps> = ({ lead }) => {
             No messages yet. Start the conversation!
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 

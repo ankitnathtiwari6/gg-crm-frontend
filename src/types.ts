@@ -4,6 +4,14 @@ export interface Message {
   role: "lead" | "assistant";
   timestamp: Date;
   status?: "sent" | "delivered" | "read" | "failed";
+  sessionId?: string;
+}
+
+export interface LeadSession {
+  sessionId: string;
+  startedAt: Date;
+  messageCount: number;
+  status: "active" | "complete" | "expired" | "no_reply";
 }
 
 export interface AuthUser {
@@ -46,12 +54,16 @@ export interface Lead {
   createdAt?: Date;
   updatedAt?: Date;
 
+  sessions?: LeadSession[];
+  leadQualityScore?: number | null;
+  leadQualityScoreReason?: string | null;
+  leadQualityScoreUpdatedAt?: Date | null;
   // For backward compatibility with existing components
-  qualifiedLead?: boolean; // Derived from neetScore
-  location?: string; // Derived from city and state
-  countryInterest?: string; // Alias for preferredCountry
-  stage?: string; // Derived from status
-  neetStatus?: string; // Derived from neetScore
+  qualifiedLead?: boolean;
+  location?: string;
+  countryInterest?: string;
+  stage?: string;
+  neetStatus?: string;
 }
 
 export interface LeadsTableProps {

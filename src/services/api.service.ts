@@ -96,7 +96,12 @@ export const leadService = {
     apiRequest(endpoints.leads.getAll, "GET", undefined, token, params),
 
   getLeadById: (id: string, token: string): any =>
-    apiRequest(`${endpoints.leads.getOne}/${id}`, "GET", undefined, token),
+    apiRequest(`/leads/${id}`, "GET", undefined, token),
+
+  getChatHistory: async (id: string, token: string): Promise<any[]> => {
+    const res = await apiRequest<any>(`/leads/${id}`, "GET", undefined, token);
+    return res?.lead?.chatHistory ?? [];
+  },
 
   updateLead: (id: string, data: any, token: string): any => {
     return apiRequest(`${endpoints.leads.update}/${id}`, "PUT", data, token);

@@ -11,6 +11,24 @@ import Chat from "./Chat";
 import CompactEditModal from "./CompactEditModal";
 import moment from "moment";
 
+// ─── Quality score helpers ────────────────────────────────────────────────────
+
+const getScoreBadgeColor = (score: number | null | undefined): string => {
+  if (score == null) return "bg-gray-100 text-gray-500";
+  if (score >= 70) return "bg-green-100 text-green-700";
+  if (score >= 40) return "bg-yellow-100 text-yellow-700";
+  return "bg-red-100 text-red-700";
+};
+
+const getScoreLabel = (score: number | null | undefined): string => {
+  if (score == null) return "—";
+  if (score >= 80) return `${score} Hot`;
+  if (score >= 60) return `${score} Warm`;
+  if (score >= 40) return `${score} Neutral`;
+  if (score >= 20) return `${score} Cold`;
+  return `${score} Junk`;
+};
+
 const getTagColor = (index: number): string => {
   const colors = [
     "bg-blue-100 text-blue-800",
@@ -390,6 +408,16 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
               )}
             </div>
           </div>
+
+          {/* Quality score */}
+          <div className="mt-2 flex items-center gap-2">
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getScoreBadgeColor(lead.leadQualityScore)}`}>
+              {getScoreLabel(lead.leadQualityScore)}
+            </span>
+            {lead.leadQualityScoreReason && (
+              <span className="text-xs text-gray-400 truncate">{lead.leadQualityScoreReason}</span>
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -412,6 +440,9 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
               Assigned To
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              Quality
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
               Tags
@@ -527,6 +558,16 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                   {showAssignPopup === lead.id &&
                     AssignDropdown(lead.id, !!lead?.assignedTo?.id)}
                 </div>
+              </td>
+              <td className="px-6 py-4">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getScoreBadgeColor(lead.leadQualityScore)}`}>
+                  {getScoreLabel(lead.leadQualityScore)}
+                </span>
+                {lead.leadQualityScoreReason && (
+                  <p className="text-xs text-gray-400 mt-1 max-w-[140px] truncate" title={lead.leadQualityScoreReason}>
+                    {lead.leadQualityScoreReason}
+                  </p>
+                )}
               </td>
               <td className="px-6 py-4">
                 <div className="flex flex-col space-y-1">
