@@ -98,6 +98,11 @@ export const leadService = {
   getLeadById: (id: string, token: string): any =>
     apiRequest(`/leads/${id}`, "GET", undefined, token),
 
+  getLeadById: async (id: string, token: string): Promise<any> => {
+    const res = await apiRequest<any>(`/leads/${id}`, "GET", undefined, token);
+    return res?.lead ?? null;
+  },
+
   getChatHistory: async (id: string, token: string): Promise<any[]> => {
     const res = await apiRequest<any>(`/leads/${id}`, "GET", undefined, token);
     return res?.lead?.chatHistory ?? [];
@@ -105,6 +110,10 @@ export const leadService = {
 
   updateLead: (id: string, data: any, token: string): any => {
     return apiRequest(`${endpoints.leads.update}/${id}`, "PUT", data, token);
+  },
+
+  addRemark: async (id: string, text: string, token: string): Promise<any> => {
+    return apiRequest(`/leads/${id}/remarks`, "POST", { text }, token);
   },
 };
 

@@ -4,7 +4,6 @@ import { Lead } from "../../types";
 import { RootState } from "../store";
 import api from "../../services/api.service";
 
-// Define filter state interface
 export interface LeadsFilters {
   neetStatus: string;
   neetScoreRange: [number, number];
@@ -12,33 +11,33 @@ export interface LeadsFilters {
   location: string;
   isQualified: boolean;
   tags: string[];
-  assignedTo: string; // Added assignedTo filter
+  assignedTo: string;
   dateRange: {
     start: string;
     end: string;
   };
 }
 
-// Define leads state interface
 interface LeadsState {
   leads: Lead[];
   totalLeads: number;
-  todayLeadsCount: number; // Added todayLeadsCount field
+  todayLeadsCount: number;
   totalPages: number;
   currentPage: number;
   itemsPerPage: number;
   searchQuery: string;
   filters: LeadsFilters;
   isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
   error: string | null;
-  selectedLeadId: string | null; // Added for edit modal
+  selectedLeadId: string | null;
 }
 
-// Initial state
 const initialState: LeadsState = {
   leads: [],
   totalLeads: 0,
-  todayLeadsCount: 0, // Initialize todayLeadsCount
+  todayLeadsCount: 0,
   totalPages: 1,
   currentPage: 1,
   itemsPerPage: 20,
@@ -50,21 +49,22 @@ const initialState: LeadsState = {
     location: "",
     isQualified: false,
     tags: [],
-    assignedTo: "", // Initialize with empty string
+    assignedTo: "",
     dateRange: {
       start: "",
       end: "",
     },
   },
   isLoading: false,
+  isLoadingMore: false,
+  hasMore: true,
   error: null,
-  selectedLeadId: null, // Added for edit modal
+  selectedLeadId: null,
 };
 
-// Async thunk for fetching leads with filters
 export const fetchLeads = createAsyncThunk(
   "leads/fetchLeads",
-  async (_, { getState, rejectWithValue }) => {
+  async (append: boolean = false, { getState, rejectWithValue }) => {
     const state = getState() as RootState;
     const { currentPage, itemsPerPage, searchQuery, filters } = state.leads;
 
@@ -74,18 +74,11 @@ export const fetchLeads = createAsyncThunk(
         limit: itemsPerPage,
       };
       if (searchQuery) params.search = searchQuery;
-
       if (filters.neetStatus) params.neetStatus = filters.neetStatus;
-
-      if (filters.neetScoreRange[0] > 0)
-        params.minScore = filters.neetScoreRange[0];
-      if (filters.neetScoreRange[1] < 720)
-        params.maxScore = filters.neetScoreRange[1];
-
+      if (filters.neetScoreRange[0] > 0) params.minScore = filters.neetScoreRange[0];
+      if (filters.neetScoreRange[1] < 720) params.maxScore = filters.neetScoreRange[1];
       if (filters.country) params.country = filters.country;
       if (filters.location) params.location = filters.location;
-
-      // Assigned To filter
       if (filters.assignedTo) {
         if (filters.assignedTo === "unassigned") {
           params.unassigned = true;
@@ -93,16 +86,8 @@ export const fetchLeads = createAsyncThunk(
           params.assignedTo = filters.assignedTo;
         }
       }
-
-      // Qualified status
       if (filters.isQualified) params.isQualified = true;
-
-      // Tags filtering - pass as array directly
-      if (filters.tags && filters.tags.length > 0) {
-        params.tags = filters.tags;
-      }
-
-      // Date range
+      if (filters.tags && filters.tags.length > 0) params.tags = filters.tags;
       if (filters.dateRange.start) params.startDate = filters.dateRange.start;
       if (filters.dateRange.end) params.endDate = filters.dateRange.end;
 
@@ -114,35 +99,27 @@ export const fetchLeads = createAsyncThunk(
           leads: response.leads,
           totalPages: response.totalPages,
           totalLeads: response.totalLeads,
-          todayLeadsCount: response.todayLeadsCount, // Extract todayLeadsCount from response
+          todayLeadsCount: response.todayLeadsCount,
+          append,
         };
       } else {
         return rejectWithValue(response.message || "Failed to fetch leads");
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        return rejectWithValue(
-          error.response.data.message || "An error occurred"
-        );
+        return rejectWithValue(error.response.data.message || "An error occurred");
       }
       return rejectWithValue("Failed to load leads. Please try again.");
     }
   }
 );
 
-// New async thunk for updating a lead
 export const updateLead = createAsyncThunk(
   "leads/updateLead",
   async (lead: Lead, { getState, rejectWithValue }) => {
     try {
       const state = getState() as RootState;
-
-      const response = await api.lead.updateLead(
-        lead.id,
-        lead,
-        state?.auth?.token ?? ""
-      );
-
+      const response = await api.lead.updateLead(lead.id, lead, state?.auth?.token ?? "");
       if (response.success) {
         return response.lead;
       } else {
@@ -157,109 +134,117 @@ export const updateLead = createAsyncThunk(
   }
 );
 
-// Create the leads slice
 const leadsSlice = createSlice({
   name: "leads",
   initialState,
   reducers: {
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
-      state.currentPage = 1; // Reset page when search changes
+      state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
     },
     setFilters: (state, action: PayloadAction<Partial<LeadsFilters>>) => {
       state.filters = { ...state.filters, ...action.payload };
-      state.currentPage = 1; // Reset page when filters change
+      state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
     },
     setTagFilter: (state, action: PayloadAction<string[]>) => {
       state.filters.tags = action.payload;
-      state.currentPage = 1; // Reset page when tags filter changes
+      state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
     },
     addTagFilter: (state, action: PayloadAction<string>) => {
       if (!state.filters.tags.includes(action.payload)) {
         state.filters.tags.push(action.payload);
-        state.currentPage = 1; // Reset page when tag is added
+        state.currentPage = 1;
+        state.leads = [];
+        state.hasMore = true;
       }
     },
     removeTagFilter: (state, action: PayloadAction<string>) => {
-      state.filters.tags = state.filters.tags.filter(
-        (tag) => tag !== action.payload
-      );
-      state.currentPage = 1; // Reset page when tag is removed
+      state.filters.tags = state.filters.tags.filter((tag) => tag !== action.payload);
+      state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
     },
     setAssignedToFilter: (state, action: PayloadAction<string>) => {
       state.filters.assignedTo = action.payload;
-      state.currentPage = 1; // Reset page when assigned to filter changes
+      state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
     },
     setPage: (state, action: PayloadAction<number>) => {
       state.currentPage = action.payload;
     },
+    incrementPage: (state) => {
+      state.currentPage += 1;
+    },
     resetFilters: (state) => {
       state.filters = initialState.filters;
       state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
     },
     clearError: (state) => {
       state.error = null;
     },
-    // New reducers for lead selection
     setSelectedLead: (state, action: PayloadAction<string | null>) => {
       state.selectedLeadId = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Fetch leads reducers
-      .addCase(fetchLeads.pending, (state) => {
-        state.isLoading = true;
+      .addCase(fetchLeads.pending, (state, action) => {
+        const append = action.meta.arg;
+        if (append) {
+          state.isLoadingMore = true;
+        } else {
+          state.isLoading = true;
+        }
         state.error = null;
       })
       .addCase(fetchLeads.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.leads = action.payload.leads;
-        state.totalPages = action.payload.totalPages;
-        state.totalLeads = action.payload.totalLeads;
-        state.todayLeadsCount = action.payload.todayLeadsCount; // Store todayLeadsCount in state
+        state.isLoadingMore = false;
+        const { leads, totalPages, totalLeads, todayLeadsCount, append } = action.payload;
+        if (append) {
+          state.leads = [...state.leads, ...leads];
+        } else {
+          state.leads = leads;
+        }
+        state.totalPages = totalPages;
+        state.totalLeads = totalLeads;
+        state.todayLeadsCount = todayLeadsCount;
+        state.hasMore = state.leads.length < totalLeads;
       })
       .addCase(fetchLeads.rejected, (state, action) => {
         state.isLoading = false;
+        state.isLoadingMore = false;
         state.error = action.payload as string;
-        state.leads = [];
+        if (!action.meta.arg) {
+          state.leads = [];
+        }
       })
-
-      // Update lead reducers
       .addCase(updateLead.pending, (state) => {
-        state.isLoading = true;
         state.error = null;
       })
       .addCase(updateLead.fulfilled, (state, action) => {
-        state.isLoading = false;
-
-        // Create a completely new leads array to guarantee re-rendering
-        const updatedLead = { ...action.payload }; // Create a new reference
-
-        // Replace the entire leads array with a new array
-        const newLeads = state.leads.map((lead) =>
-          lead.id === updatedLead.id ? updatedLead : lead
-        );
-
-        // Assign the new array to state.leads
-        state.leads = newLeads;
-
-        // If this lead is currently selected, refresh the selectedLeadId to trigger re-renders
+        const updatedLead = { ...action.payload };
+        state.leads = state.leads.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead));
         if (state.selectedLeadId === updatedLead.id) {
-          // This hack forces components relying on selectedLeadId to re-render
           state.selectedLeadId = null;
-          // Immediately set it back to the original value
           state.selectedLeadId = updatedLead.id;
         }
       })
       .addCase(updateLead.rejected, (state, action) => {
-        state.isLoading = false;
         state.error = action.payload as string;
       });
   },
 });
 
-// Export actions
 export const {
   setSearchQuery,
   setFilters,
@@ -268,24 +253,23 @@ export const {
   removeTagFilter,
   setAssignedToFilter,
   setPage,
+  incrementPage,
   resetFilters,
   clearError,
   setSelectedLead,
 } = leadsSlice.actions;
 
-// Export selectors
 export const selectLeadsState = (state: RootState) => state.leads;
 export const selectLeads = (state: RootState) => state.leads.leads;
 export const selectIsLoading = (state: RootState) => state.leads.isLoading;
+export const selectIsLoadingMore = (state: RootState) => state.leads.isLoadingMore;
+export const selectHasMore = (state: RootState) => state.leads.hasMore;
 export const selectError = (state: RootState) => state.leads.error;
 export const selectFilters = (state: RootState) => state.leads.filters;
-export const selectSelectedLeadId = (state: RootState) =>
-  state.leads.selectedLeadId;
+export const selectSelectedLeadId = (state: RootState) => state.leads.selectedLeadId;
 export const selectSelectedLead = (state: RootState) => {
   const selectedId = state.leads.selectedLeadId;
-  return selectedId
-    ? state.leads.leads.find((lead) => lead.id === selectedId)
-    : null;
+  return selectedId ? state.leads.leads.find((lead) => lead.id === selectedId) : null;
 };
 export const selectPagination = (state: RootState) => ({
   currentPage: state.leads.currentPage,
@@ -293,8 +277,6 @@ export const selectPagination = (state: RootState) => ({
   totalLeads: state.leads.totalLeads,
   itemsPerPage: state.leads.itemsPerPage,
 });
-export const selectTodayLeadsCount = (state: RootState) =>
-  state.leads.todayLeadsCount; // New selector for today's leads count
+export const selectTodayLeadsCount = (state: RootState) => state.leads.todayLeadsCount;
 
-// Export reducer
 export default leadsSlice.reducer;

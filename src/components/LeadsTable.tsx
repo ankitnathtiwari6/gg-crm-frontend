@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
 import {
@@ -11,8 +11,6 @@ import Chat from "./Chat";
 import CompactEditModal from "./CompactEditModal";
 import moment from "moment";
 
-// ─── Quality score helpers ────────────────────────────────────────────────────
-
 const getScoreBadgeColor = (score: number | null | undefined): string => {
   if (score == null) return "bg-gray-100 text-gray-500";
   if (score >= 70) return "bg-green-100 text-green-700";
@@ -22,11 +20,11 @@ const getScoreBadgeColor = (score: number | null | undefined): string => {
 
 const getScoreLabel = (score: number | null | undefined): string => {
   if (score == null) return "—";
-  if (score >= 80) return `${score} Hot`;
-  if (score >= 60) return `${score} Warm`;
-  if (score >= 40) return `${score} Neutral`;
-  if (score >= 20) return `${score} Cold`;
-  return `${score} Junk`;
+  if (score >= 80) return `${score} · Hot`;
+  if (score >= 60) return `${score} · Warm`;
+  if (score >= 40) return `${score} · Neutral`;
+  if (score >= 20) return `${score} · Cold`;
+  return `${score} · Junk`;
 };
 
 const getTagColor = (index: number): string => {
@@ -43,57 +41,37 @@ const getTagColor = (index: number): string => {
   return colors[index % colors.length];
 };
 
-// Helper functions for stage display
 const getStageLabel = (stage?: string): string => {
   switch (stage) {
-    case "not_responding":
-      return "Not Responding";
-    case "call_started":
-      return "Call Started";
-    case "follow_up":
-      return "Follow Up";
-    case "documents_requested":
-      return "Documents Requested";
-    case "documents_received":
-      return "Documents Received";
-    case "application_submitted":
-      return "Application Submitted";
-    case "closed_won":
-      return "Closed Won";
-    case "closed_lost":
-      return "Closed Lost";
-    default:
-      return "New Lead";
+    case "not_responding": return "Not Responding";
+    case "call_started": return "Call Started";
+    case "follow_up": return "Follow Up";
+    case "documents_requested": return "Documents Requested";
+    case "documents_received": return "Documents Received";
+    case "application_submitted": return "Application Submitted";
+    case "closed_won": return "Closed Won";
+    case "closed_lost": return "Closed Lost";
+    default: return "New Lead";
   }
 };
 
 const getStageColor = (stage?: string): string => {
   switch (stage) {
-    case "not_responding":
-      return "bg-yellow-100 text-yellow-800";
-    case "call_started":
-      return "bg-blue-100 text-blue-800";
-    case "follow_up":
-      return "bg-purple-100 text-purple-800";
-    case "documents_requested":
-      return "bg-indigo-100 text-indigo-800";
-    case "documents_received":
-      return "bg-teal-100 text-teal-800";
-    case "application_submitted":
-      return "bg-cyan-100 text-cyan-800";
-    case "closed_won":
-      return "bg-green-100 text-green-800";
-    case "closed_lost":
-      return "bg-gray-100 text-gray-800";
-    default:
-      return "bg-blue-100 text-blue-800";
+    case "not_responding": return "bg-yellow-100 text-yellow-800";
+    case "call_started": return "bg-blue-100 text-blue-800";
+    case "follow_up": return "bg-purple-100 text-purple-800";
+    case "documents_requested": return "bg-indigo-100 text-indigo-800";
+    case "documents_received": return "bg-teal-100 text-teal-800";
+    case "application_submitted": return "bg-cyan-100 text-cyan-800";
+    case "closed_won": return "bg-green-100 text-green-800";
+    case "closed_lost": return "bg-gray-100 text-gray-800";
+    default: return "bg-blue-100 text-blue-800";
   }
 };
 
-// Format the createdAt time in a relative format
 const formatCreatedAt = (createdAt?: string | Date): string => {
   if (!createdAt) return "Unknown";
-  return moment(createdAt).fromNow(); // This will return strings like "2 minutes ago", "3 days ago", etc.
+  return moment(createdAt).fromNow();
 };
 
 interface LeadsTableProps {
@@ -102,40 +80,36 @@ interface LeadsTableProps {
 
 const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
   const dispatch = useDispatch<AppDispatch>();
-
-  // Get leads from Redux
   const leads = useSelector(selectLeads);
-  // Get selected lead ID from Redux
-  const selectedLeadId = useSelector(
-    (state: RootState) => state.leads.selectedLeadId
-  );
-  // Get current user for assignment
+  const selectedLeadId = useSelector((state: RootState) => state.leads.selectedLeadId);
   const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [slideOverOpen, setSlideOverOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "chat">("profile");
   const [showAssignPopup, setShowAssignPopup] = useState<string | null>(null);
-  const [showMobileDetail, setShowMobileDetail] = useState(false);
 
-  // Find the currently selected lead
   const currentLead = leads.find((lead) => lead.id === selectedLeadId) || null;
 
-  const handleEditLead = (leadId: string) => {
-    dispatch(setSelectedLead(leadId));
-    setIsEditModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsEditModalOpen(false);
-  };
+  // Close slide-over on Escape
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSlideOverOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   const handleSelectLead = (leadId: string) => {
     dispatch(setSelectedLead(leadId));
-    setShowMobileDetail(true); // Show detail panel on mobile when a lead is selected
+    setSlideOverOpen(true);
+    setActiveTab("profile");
   };
 
-  const handleBackToList = () => {
-    setShowMobileDetail(false);
+  const handleEditLead = (leadId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    dispatch(setSelectedLead(leadId));
+    setIsEditModalOpen(true);
   };
 
   const handleCall = (phoneNumber: string, e: React.MouseEvent) => {
@@ -145,15 +119,10 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
 
   const handleAssignToMe = (leadId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-
     if (currentUser) {
-      const leadToUpdate = leads.find((lead) => lead.id === leadId);
-      if (leadToUpdate) {
-        const updatedLead = {
-          ...leadToUpdate,
-          assignedTo: { id: currentUser.id, name: currentUser.username },
-        };
-        dispatch(updateLead(updatedLead));
+      const lead = leads.find((l) => l.id === leadId);
+      if (lead) {
+        dispatch(updateLead({ ...lead, assignedTo: { id: currentUser.id, name: currentUser.username } }));
       }
     }
     setShowAssignPopup(null);
@@ -161,75 +130,48 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
 
   const handleUnassign = (leadId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-
-    const leadToUpdate = leads.find((lead) => lead.id === leadId);
-    if (leadToUpdate) {
-      const updatedLead = {
-        ...leadToUpdate,
-        assignedTo: null,
-      };
-      dispatch(updateLead(updatedLead));
+    const lead = leads.find((l) => l.id === leadId);
+    if (lead) {
+      dispatch(updateLead({ ...lead, assignedTo: null }));
     }
     setShowAssignPopup(null);
   };
 
   const toggleAssignPopup = (leadId: string | null, e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-    }
+    e?.stopPropagation();
     setShowAssignPopup(leadId === showAssignPopup ? null : leadId);
   };
 
   if (!leads || leads.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow py-8 text-center text-gray-500">
-        No leads found matching your criteria
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-16 text-center text-gray-400">
+        <svg className="mx-auto h-10 w-10 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <p className="text-sm">No leads found matching your criteria</p>
       </div>
     );
   }
 
-  // Assign/Reassign dropdown content
   const AssignDropdown = (leadId: string, isAssigned: boolean) => (
-    <div className="absolute z-10 mt-1 w-48 bg-white rounded-md shadow-lg">
+    <div className="absolute z-20 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100">
       <ul className="py-1">
         <li
-          className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center"
+          className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
           onClick={(e) => handleAssignToMe(leadId, e)}
         >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           {isAssigned ? "Reassign to me" : "Assign to me"}
         </li>
         {isAssigned && (
           <li
-            className="px-4 py-2 text-sm text-red-600 hover:bg-gray-100 cursor-pointer flex items-center"
+            className="px-4 py-2 text-sm text-red-600 hover:bg-gray-50 cursor-pointer flex items-center gap-2"
             onClick={(e) => handleUnassign(leadId, e)}
           >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
             Remove assignment
           </li>
@@ -238,497 +180,301 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
     </div>
   );
 
-  // Mobile card view for leads
-  const MobileLeadCards = (
-    <div className="space-y-4">
-      {leads.map((lead, index) => (
-        <div
-          key={lead.id}
-          className={`bg-white rounded-lg shadow p-4 ${
-            selectedLeadId === lead.id ? "border-l-4 border-green-500" : ""
-          }`}
-          onClick={() => handleSelectLead(lead.id)}
-          ref={
-            index === leads.length - 1 && lastLeadElementRef
-              ? (node) => {
-                  if (node instanceof HTMLDivElement) {
-                    lastLeadElementRef(node);
-                  }
+  return (
+    <>
+      {/* ── Desktop Table ── */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <table className="min-w-full">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Lead</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned To</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">AI Score</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags / Stage</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+              <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {leads.map((lead, index) => (
+              <tr
+                key={lead.id}
+                ref={
+                  index === leads.length - 1 && lastLeadElementRef
+                    ? (node) => { if (node instanceof HTMLTableRowElement) lastLeadElementRef(node); }
+                    : undefined
                 }
-              : undefined
-          }
-        >
-          <div className="flex justify-between">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-800 font-medium">
-                  {lead?.name?.charAt(0)?.toUpperCase() || "?"}
-                </span>
-              </div>
-              <div className="ml-3">
-                <div className="text-sm font-medium text-gray-900">
-                  {lead?.name || "Unknown"}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {lead?.source || "WhatsApp"}
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditLead(lead.id);
-              }}
-              className="text-green-600 hover:text-green-900"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+                className={`cursor-pointer transition-colors duration-100 hover:bg-indigo-50/40 ${
+                  selectedLeadId === lead.id ? "bg-indigo-50 border-l-2 border-indigo-400" : ""
+                }`}
+                onClick={() => handleSelectLead(lead.id)}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <div>
-              <div className="text-xs text-gray-500">Contact</div>
-              <div
-                className="text-sm text-blue-600 cursor-pointer hover:underline"
-                onClick={(e) => handleCall(lead.leadPhoneNumber, e)}
-              >
-                {`+${lead?.leadPhoneNumber}`}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs text-gray-500">Prefered Country</div>
-              <div className="text-sm text-gray-900">
-                {lead?.preferredCountry || lead.location || "Unknown"}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 flex justify-between items-center">
-            <div>
-              <div className="text-xs text-gray-500">Assigned To</div>
-              <div className="relative">
-                {lead?.assignedTo?.id ? (
-                  <div
-                    className="text-sm text-gray-900 flex items-center cursor-pointer hover:bg-gray-50 rounded px-2 py-1"
-                    onClick={(e) => toggleAssignPopup(lead.id, e)}
-                  >
-                    <div className="h-5 w-5 bg-blue-100 rounded-full flex items-center justify-center mr-1">
-                      <span className="text-blue-800 text-xs font-medium">
-                        {lead?.assignedTo?.name?.charAt(0)?.toUpperCase()}
+                {/* Lead */}
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0 h-9 w-9 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
+                      <span className="text-white text-sm font-semibold">
+                        {lead?.name?.charAt(0)?.toUpperCase() || "?"}
                       </span>
                     </div>
-                    <span className="mr-1">{lead?.assignedTo?.name}</span>
-                    <svg
-                      className="w-4 h-4 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-800">{lead?.name || "Unknown"}</div>
+                      <div className="text-xs text-gray-400">{lead?.source || "WhatsApp"}</div>
+                    </div>
                   </div>
-                ) : (
-                  <button
-                    onClick={(e) => toggleAssignPopup(lead.id, e)}
-                    className="cursor-pointer px-2 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none flex items-center"
+                </td>
+
+                {/* Contact */}
+                <td className="px-5 py-3.5">
+                  <div
+                    className="text-sm text-indigo-600 font-medium cursor-pointer hover:underline"
+                    onClick={(e) => handleCall(lead.leadPhoneNumber, e)}
                   >
-                    <svg
-                      className="w-3 h-3 mr-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
+                    +{lead?.leadPhoneNumber}
+                  </div>
+                  {lead.email && <div className="text-xs text-gray-400 mt-0.5">{lead.email}</div>}
+                </td>
+
+                {/* Country */}
+                <td className="px-5 py-3.5">
+                  <div className="text-sm text-gray-700">{lead?.preferredCountry || "—"}</div>
+                  {lead.location && <div className="text-xs text-gray-400">{lead.location}</div>}
+                </td>
+
+                {/* Assigned To */}
+                <td className="px-5 py-3.5">
+                  <div className="relative">
+                    {lead?.assignedTo?.id ? (
+                      <div
+                        className="flex items-center gap-1.5 cursor-pointer hover:bg-gray-100 rounded-md px-2 py-1 w-fit"
+                        onClick={(e) => toggleAssignPopup(lead.id, e)}
+                      >
+                        <div className="h-6 w-6 bg-indigo-100 rounded-full flex items-center justify-center">
+                          <span className="text-indigo-700 text-xs font-semibold">
+                            {lead?.assignedTo?.name?.charAt(0)?.toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-700">{lead?.assignedTo?.name}</span>
+                        <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={(e) => toggleAssignPopup(lead.id, e)}
+                        className="px-2.5 py-1 text-xs font-medium text-white bg-indigo-500 rounded-md hover:bg-indigo-600 flex items-center gap-1"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Assign
+                      </button>
+                    )}
+                    {showAssignPopup === lead.id && AssignDropdown(lead.id, !!lead?.assignedTo?.id)}
+                  </div>
+                </td>
+
+                {/* Score */}
+                <td className="px-5 py-3.5">
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getScoreBadgeColor(lead.leadQualityScore)}`}>
+                    {getScoreLabel(lead.leadQualityScore)}
+                  </span>
+                  {lead.leadQualityScoreReason && (
+                    <p className="text-xs text-gray-400 mt-1 max-w-[150px] truncate" title={lead.leadQualityScoreReason}>
+                      {lead.leadQualityScoreReason}
+                    </p>
+                  )}
+                </td>
+
+                {/* Tags / Stage */}
+                <td className="px-5 py-3.5">
+                  <div className="flex flex-wrap gap-1 max-w-[180px]">
+                    {lead.tags?.slice(0, 2).map((tag, i) => (
+                      <span key={i} className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTagColor(i)}`}>
+                        {tag}
+                      </span>
+                    ))}
+                    {(lead.tags?.length ?? 0) > 2 && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                        +{(lead.tags?.length ?? 0) - 2}
+                      </span>
+                    )}
+                    {lead.stage && (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>
+                        {getStageLabel(lead.stage)}
+                      </span>
+                    )}
+                  </div>
+                </td>
+
+                {/* Created */}
+                <td className="px-5 py-3.5">
+                  <div className="text-xs text-gray-500 whitespace-nowrap">{formatCreatedAt(lead.createdAt)}</div>
+                </td>
+
+                {/* Edit */}
+                <td className="px-5 py-3.5 text-center">
+                  <button
+                    onClick={(e) => handleEditLead(lead.id, e)}
+                    className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
-                    Assign
                   </button>
-                )}
-                {showAssignPopup === lead.id &&
-                  AssignDropdown(lead.id, !!lead?.assignedTo?.id)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── Mobile Cards ── */}
+      <div className="md:hidden space-y-3">
+        {leads.map((lead, index) => (
+          <div
+            key={lead.id}
+            ref={
+              index === leads.length - 1 && lastLeadElementRef
+                ? (node) => { if (node instanceof HTMLDivElement) lastLeadElementRef(node); }
+                : undefined
+            }
+            className={`bg-white rounded-xl shadow-sm border p-4 cursor-pointer transition-colors ${
+              selectedLeadId === lead.id ? "border-indigo-300 bg-indigo-50/30" : "border-gray-100"
+            }`}
+            onClick={() => handleSelectLead(lead.id)}
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold">{lead?.name?.charAt(0)?.toUpperCase() || "?"}</span>
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">{lead?.name || "Unknown"}</div>
+                  <div className="text-xs text-gray-400">{lead?.source || "WhatsApp"}</div>
+                </div>
+              </div>
+              <button
+                onClick={(e) => handleEditLead(lead.id, e)}
+                className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-md"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <div className="text-xs text-gray-400">Contact</div>
+                <div className="text-indigo-600 font-medium" onClick={(e) => handleCall(lead.leadPhoneNumber, e)}>
+                  +{lead?.leadPhoneNumber}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-400">Country</div>
+                <div className="text-gray-700">{lead?.preferredCountry || "—"}</div>
               </div>
             </div>
 
-            <div>
-              <div className="text-xs text-gray-500">Created</div>
-              <div className="text-sm text-gray-500">
-                {formatCreatedAt(lead.createdAt)}
-              </div>
+            <div className="mt-2 flex items-center justify-between">
+              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getScoreBadgeColor(lead.leadQualityScore)}`}>
+                {getScoreLabel(lead.leadQualityScore)}
+              </span>
+              <span className="text-xs text-gray-400">{formatCreatedAt(lead.createdAt)}</span>
             </div>
-          </div>
 
-          <div className="mt-3">
-            <div className="flex flex-wrap gap-1">
-              {lead.tags && lead.tags.length > 0
-                ? lead.tags.map((tag, tagIndex) => (
-                    <span
-                      key={tagIndex}
-                      className={`px-2 py-0.5 rounded-full text-xs ${getTagColor(
-                        tagIndex
-                      )}`}
-                    >
-                      {tag}
-                    </span>
-                  ))
-                : null}
+            {lead.leadQualityScoreReason && (
+              <p className="mt-1 text-xs text-gray-400 truncate">{lead.leadQualityScoreReason}</p>
+            )}
 
+            <div className="mt-2 flex flex-wrap gap-1">
+              {lead.tags?.slice(0, 2).map((tag, i) => (
+                <span key={i} className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTagColor(i)}`}>{tag}</span>
+              ))}
               {lead.stage && (
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs ${getStageColor(
-                    lead.stage
-                  )}`}
-                >
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>
                   {getStageLabel(lead.stage)}
                 </span>
               )}
             </div>
           </div>
+        ))}
+      </div>
 
-          {/* Quality score */}
-          <div className="mt-2 flex items-center gap-2">
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getScoreBadgeColor(lead.leadQualityScore)}`}>
-              {getScoreLabel(lead.leadQualityScore)}
-            </span>
-            {lead.leadQualityScoreReason && (
-              <span className="text-xs text-gray-400 truncate">{lead.leadQualityScoreReason}</span>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+      {/* ── Slide-Over Panel ── */}
+      {slideOverOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
+            onClick={() => setSlideOverOpen(false)}
+          />
 
-  // Desktop table view
-  const DesktopLeadsTable = (
-    <div className="bg-white rounded-lg shadow overflow-x-auto">
-      <table className="min-w-full">
-        <thead>
-          <tr className="bg-gray-50 border-b">
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              Lead
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              Contact
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              Prefered Country
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              Assigned To
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              Quality
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              Tags
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              Created
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-              Edit
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          {leads.map((lead, index) => (
-            <tr
-              key={lead.id}
-              className={`hover:bg-gray-50 cursor-pointer ${
-                selectedLeadId === lead.id ? "bg-green-50" : ""
-              }`}
-              ref={
-                index === leads.length - 1 && lastLeadElementRef
-                  ? (node) => {
-                      if (node instanceof HTMLTableRowElement) {
-                        lastLeadElementRef(node);
-                      }
-                    }
-                  : undefined
-              }
-              onClick={() => handleSelectLead(lead.id)}
-            >
-              <td className="px-6 py-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-800 font-medium">
-                      {lead?.name?.charAt(0)?.toUpperCase() || "?"}
-                    </span>
-                  </div>
-                  <div className="ml-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      {lead?.name || "Unknown"}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {lead?.source || "WhatsApp"}
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <div
-                  className="text-sm text-blue-600 cursor-pointer hover:underline"
-                  onClick={(e) => handleCall(lead.leadPhoneNumber, e)}
-                >
-                  {`+${lead?.leadPhoneNumber}`}
-                </div>
-                <div className="text-xs text-gray-500">{lead.email}</div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="text-sm text-gray-900">
-                  {lead?.preferredCountry}
-                </div>
-                <div className="text-xs text-gray-500">{lead.location}</div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="relative">
-                  {lead?.assignedTo?.id ? (
-                    <div
-                      className="text-sm text-gray-900 flex items-center cursor-pointer hover:bg-gray-50 rounded-md px-2 py-1"
-                      onClick={(e) => toggleAssignPopup(lead.id, e)}
-                    >
-                      <div className="h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                        <span className="text-blue-800 text-xs font-medium">
-                          {lead?.assignedTo?.name?.charAt(0)?.toUpperCase()}
-                        </span>
-                      </div>
-                      <span className="mr-1">{lead?.assignedTo?.name}</span>
-                      <svg
-                        className="w-4 h-4 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => toggleAssignPopup(lead.id, e)}
-                      className="cursor-pointer px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none flex items-center"
-                    >
-                      <svg
-                        className="w-3 h-3 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                      Assign
-                    </button>
-                  )}
-                  {showAssignPopup === lead.id &&
-                    AssignDropdown(lead.id, !!lead?.assignedTo?.id)}
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getScoreBadgeColor(lead.leadQualityScore)}`}>
-                  {getScoreLabel(lead.leadQualityScore)}
-                </span>
-                {lead.leadQualityScoreReason && (
-                  <p className="text-xs text-gray-400 mt-1 max-w-[140px] truncate" title={lead.leadQualityScoreReason}>
-                    {lead.leadQualityScoreReason}
-                  </p>
-                )}
-              </td>
-              <td className="px-6 py-4">
-                <div className="flex flex-col space-y-1">
-                  {lead.tags && lead.tags.length > 0
-                    ? lead.tags.map((tag, tagIndex) => (
-                        <span
-                          key={tagIndex}
-                          className={`px-2 py-1 rounded-full text-xs ${getTagColor(
-                            tagIndex
-                          )}`}
-                        >
-                          {tag}
-                        </span>
-                      ))
-                    : null}
-
-                  {lead.stage && (
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStageColor(
-                        lead.stage
-                      )}`}
-                    >
-                      {getStageLabel(lead.stage)}
-                    </span>
-                  )}
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="text-sm text-gray-500 whitespace-nowrap">
-                  {formatCreatedAt(lead.createdAt)}
-                </div>
-              </td>
-              <td className="px-6 py-4 text-center">
+          {/* Panel */}
+          <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white z-50 shadow-2xl flex flex-col transform transition-transform duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+              <div className="flex gap-1">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditLead(lead.id);
-                  }}
-                  className="text-green-600 hover:text-green-900 cursor-pointer"
+                  onClick={() => setActiveTab("profile")}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === "profile"
+                      ? "bg-white text-indigo-600 shadow-sm border border-gray-200"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                    />
-                  </svg>
+                  Profile
                 </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+                <button
+                  onClick={() => setActiveTab("chat")}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === "chat"
+                      ? "bg-white text-indigo-600 shadow-sm border border-gray-200"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Chat
+                </button>
+              </div>
+              <button
+                onClick={() => setSlideOverOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-  // Detail view for desktop/mobile
-  const DetailView = (
-    <div className="flex flex-col bg-white rounded-lg shadow h-full">
-      {/* Mobile back button */}
-      {showMobileDetail && (
-        <div className="md:hidden p-3 border-b flex items-center">
-          <button
-            onClick={handleBackToList}
-            className="flex items-center text-gray-600"
-          >
-            <svg
-              className="w-5 h-5 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            Back to leads
-          </button>
-        </div>
+            {/* Content */}
+            <div className="flex-1 overflow-hidden">
+              {currentLead ? (
+                activeTab === "profile" ? (
+                  <div className="h-full overflow-y-auto">
+                    <LeadProfile lead={currentLead} />
+                  </div>
+                ) : (
+                  <Chat lead={currentLead} />
+                )
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                  Select a lead to view details
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
-      <div className="border-b">
-        <div className="flex">
-          <button
-            className={`cursor-pointer py-3 px-4 font-medium ${
-              activeTab === "profile"
-                ? "text-green-600 border-b-2 border-green-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-            onClick={() => setActiveTab("profile")}
-          >
-            Profile
-          </button>
-          <button
-            className={`cursor-pointer py-3 px-4 font-medium ${
-              activeTab === "chat"
-                ? "text-green-600 border-b-2 border-green-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-            onClick={() => setActiveTab("chat")}
-          >
-            Chat
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-hidden p-4">
-        {currentLead ? (
-          activeTab === "profile" ? (
-            <LeadProfile
-              lead={currentLead}
-              onEdit={() => handleEditLead(currentLead.id)}
-            />
-          ) : (
-            <Chat lead={currentLead} />
-          )
-        ) : (
-          <div className="h-full flex items-center justify-center text-gray-500">
-            Select a lead to view details
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="md:flex md:h-full md:gap-4">
-      {/* Mobile view logic */}
-      <div className={`md:hidden ${showMobileDetail ? "hidden" : "block"}`}>
-        {MobileLeadCards}
-      </div>
-
-      <div
-        className={`md:hidden ${showMobileDetail ? "block" : "hidden"} h-full`}
-      >
-        {DetailView}
-      </div>
-
-      {/* Desktop view */}
-      <div className="hidden md:block md:w-2/3">{DesktopLeadsTable}</div>
-
-      <div className="hidden md:block md:w-1/3">{DetailView}</div>
-
-      {/* Edit Modal - Now only passing the leadId instead of the entire lead object */}
       <CompactEditModal
         leadId={selectedLeadId}
         isOpen={isEditModalOpen}
-        onClose={handleCloseModal}
+        onClose={() => setIsEditModalOpen(false)}
       />
-    </div>
+    </>
   );
 };
 

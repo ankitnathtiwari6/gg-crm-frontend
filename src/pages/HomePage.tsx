@@ -1,18 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import LeadsTable from "../components/LeadsTable";
-import LeadStats from "../components/LeadStats"; // Import the new component
+import LeadStats from "../components/LeadStats";
 import { Filters } from "../components/Filters";
 import { SearchBar } from "../components/Search";
 import {
   fetchLeads,
+  incrementPage,
   setSearchQuery,
   setFilters,
-  setPage,
   clearError,
   selectLeadsState,
   selectLeads,
   selectIsLoading,
+  selectIsLoadingMore,
+  selectHasMore,
   selectError,
   selectFilters,
   selectPagination,
@@ -24,190 +26,173 @@ const HomePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const leads = useSelector(selectLeads);
   const isLoading = useSelector(selectIsLoading);
+  const isLoadingMore = useSelector(selectIsLoadingMore);
+  const hasMore = useSelector(selectHasMore);
   const error = useSelector(selectError);
   const filters = useSelector(selectFilters);
-  const { currentPage, totalPages, totalLeads } = useSelector(selectPagination);
+  const { totalLeads } = useSelector(selectPagination);
   const { searchQuery } = useSelector(selectLeadsState);
-  const todayLeadsCount = useSelector(selectTodayLeadsCount); // Get todayLeadsCount from Redux store
+  const todayLeadsCount = useSelector(selectTodayLeadsCount);
 
-  // Fetch leads when page or filters change
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+
+  // IntersectionObserver for infinite scroll
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const lastLeadRef = useCallback(
+    (node: HTMLTableRowElement | HTMLDivElement) => {
+      if (isLoading || isLoadingMore) return;
+      if (observerRef.current) observerRef.current.disconnect();
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          dispatch(incrementPage());
+          dispatch(fetchLeads(true));
+        }
+      });
+      if (node) observerRef.current.observe(node);
+    },
+    [isLoading, isLoadingMore, hasMore, dispatch]
+  );
+
+  // Initial fetch and re-fetch when filters/search change (always fresh)
   useEffect(() => {
-    dispatch(fetchLeads());
-  }, [dispatch, currentPage]);
+    dispatch(fetchLeads(false));
+  }, [dispatch, filters, searchQuery]);
 
   const handleSearchChange = (query: string) => {
     dispatch(setSearchQuery(query));
-    dispatch(fetchLeads());
   };
 
   const handleFilterChange = (newFilters: Partial<typeof filters>) => {
     dispatch(setFilters(newFilters));
-    // Fetching will be triggered after filters state changes due to the middleware
-    dispatch(fetchLeads());
-  };
-
-  const handlePageChange = (pageNumber: number) => {
-    dispatch(setPage(pageNumber));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    // Fetching will be triggered by the useEffect when currentPage changes
   };
 
   const handleRefresh = () => {
-    dispatch(fetchLeads());
+    dispatch(fetchLeads(false));
   };
 
-  // Pagination component
-  const Pagination = () => {
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    // Adjust start page if end page is maxed out
-    if (endPage === totalPages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    const pages = Array.from(
-      { length: endPage - startPage + 1 },
-      (_, i) => startPage + i
-    );
-
-    return (
-      <div className="flex flex-col items-center justify-center mt-4 mb-8">
-        <div className="text-sm text-gray-500 mb-2">
-          Showing {leads.length} of {totalLeads} leads
-        </div>
-
-        <div className="flex items-center">
-          <button
-            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 mx-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-
-          {startPage > 1 && (
-            <>
-              <button
-                onClick={() => handlePageChange(1)}
-                className={`px-3 py-1 mx-1 rounded border ${
-                  currentPage === 1
-                    ? "bg-blue-500 text-white"
-                    : "border-gray-300"
-                }`}
-              >
-                1
-              </button>
-              {startPage > 2 && <span className="mx-1">...</span>}
-            </>
-          )}
-
-          {pages.map((page) => (
-            <button
-              key={page}
-              onClick={() => handlePageChange(page)}
-              className={`px-3 py-1 mx-1 rounded border ${
-                currentPage === page
-                  ? "bg-blue-500 text-white"
-                  : "border-gray-300"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-
-          {endPage < totalPages && (
-            <>
-              {endPage < totalPages - 1 && <span className="mx-1">...</span>}
-              <button
-                onClick={() => handlePageChange(totalPages)}
-                className={`px-3 py-1 mx-1 rounded border ${
-                  currentPage === totalPages
-                    ? "bg-blue-500 text-white"
-                    : "border-gray-300"
-                }`}
-              >
-                {totalPages}
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() =>
-              handlePageChange(Math.min(totalPages, currentPage + 1))
-            }
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 mx-1 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    );
-  };
+  const activeFilterCount = [
+    filters.neetStatus,
+    filters.country,
+    filters.location,
+    filters.assignedTo,
+    filters.dateRange.start,
+    filters.dateRange.end,
+    filters.isQualified,
+  ].filter(Boolean).length + filters.tags.length;
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Main content with left margin to accommodate the fixed sidebar */}
-      <div className="flex-1 flex flex-col md:ml-20 transition-all duration-300">
-        <div className="bg-white shadow-sm p-4 m-4 rounded-lg">
-          <SearchBar
-            searchQuery={searchQuery}
-            setSearchQuery={handleSearchChange}
-          />
-        </div>
-
-        {/* Lead Stats Section */}
-
-        <div className="bg-white shadow-sm p-4 m-4 rounded-lg">
-          <div className="max-w-6xl mx-auto space-y-8">
-            <Filters filters={filters} setFilters={handleFilterChange} />
-          </div>
-        </div>
-
-        <div className="p-4 flex-1">
-          <div className="mb-4 flex justify-between items-center">
-            <LeadStats totalLeads={totalLeads} todayLeads={todayLeadsCount} />
-
-            <button
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
-            >
-              {isLoading ? "Loading..." : "Refresh"}
-            </button>
+    <div className="flex h-screen bg-gray-50">
+      <div className="flex-1 flex flex-col md:ml-20 min-w-0 transition-all duration-300">
+        {/* Top bar */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+          <div className="flex-1">
+            <SearchBar searchQuery={searchQuery} setSearchQuery={handleSearchChange} />
           </div>
 
-          {error && (
-            <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-md">
-              {error}
-              <button
-                onClick={() => dispatch(clearError())}
-                className="ml-2 text-sm underline"
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
+          {/* Filter icon */}
+          <button
+            onClick={() => setFilterDrawerOpen(true)}
+            className="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-sm text-gray-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span className="hidden sm:inline">Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-indigo-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
 
-          <LeadsTable />
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-500 text-white text-sm hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+          >
+            <svg className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="hidden sm:inline">{isLoading ? "Loading…" : "Refresh"}</span>
+          </button>
+        </div>
 
-          {isLoading && (
-            <div className="text-center py-4">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <p className="mt-2">Loading leads...</p>
-            </div>
-          )}
+        {/* Stats bar */}
+        <div className="px-4 py-2 bg-white border-b border-gray-50">
+          <LeadStats totalLeads={totalLeads} todayLeads={todayLeadsCount} />
+        </div>
 
-          {!isLoading && leads.length === 0 && !error && (
-            <div className="text-center py-4 text-gray-500">
-              No leads found matching your criteria
+        {/* Error */}
+        {error && (
+          <div className="mx-4 mt-3 px-4 py-3 bg-red-50 border border-red-100 text-red-700 rounded-lg text-sm flex justify-between">
+            <span>{error}</span>
+            <button onClick={() => dispatch(clearError())} className="underline ml-2">Dismiss</button>
+          </div>
+        )}
+
+        {/* Table */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {isLoading && leads.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mb-3"></div>
+                <p className="text-sm text-gray-400">Loading leads…</p>
+              </div>
             </div>
+          ) : (
+            <>
+              <LeadsTable lastLeadElementRef={lastLeadRef} />
+
+              {/* Load more indicator */}
+              {isLoadingMore && (
+                <div className="flex items-center justify-center py-6 gap-2 text-sm text-gray-400">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-400"></div>
+                  Loading more leads…
+                </div>
+              )}
+
+              {!hasMore && leads.length > 0 && (
+                <div className="text-center py-6 text-xs text-gray-400">
+                  All {totalLeads} leads loaded
+                </div>
+              )}
+            </>
           )}
         </div>
-        <div className="my-2">{leads.length > 0 && <Pagination />}</div>
       </div>
+
+      {/* ── Filter Drawer (right) ── */}
+      {filterDrawerOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/20 z-30"
+            onClick={() => setFilterDrawerOpen(false)}
+          />
+          <div className="fixed right-0 top-0 h-full w-80 bg-white z-40 shadow-xl flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-800">Filters</h2>
+              <div className="flex items-center gap-2">
+                {activeFilterCount > 0 && (
+                  <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">
+                    {activeFilterCount} active
+                  </span>
+                )}
+                <button
+                  onClick={() => setFilterDrawerOpen(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <Filters filters={filters} setFilters={handleFilterChange} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

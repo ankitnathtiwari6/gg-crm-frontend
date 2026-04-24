@@ -1,3 +1,20 @@
+export interface Remark {
+  _id?: string;
+  text: string;
+  author: { id: string; name: string };
+  createdAt: Date | string;
+}
+
+export interface ActivityLog {
+  _id?: string;
+  action: string;
+  field?: string;
+  oldValue?: string;
+  newValue?: string;
+  author?: { id: string; name: string };
+  createdAt: Date | string;
+}
+
 export interface Message {
   messageId: string;
   content: string;
@@ -58,12 +75,17 @@ export interface Lead {
   leadQualityScore?: number | null;
   leadQualityScoreReason?: string | null;
   leadQualityScoreUpdatedAt?: Date | null;
-  // For backward compatibility with existing components
   qualifiedLead?: boolean;
   location?: string;
   countryInterest?: string;
   stage?: string;
   neetStatus?: string;
+  qualification?: string;
+  neetYear?: number | null;
+  targetYear?: number | null;
+  budget?: string;
+  remarks?: Remark[];
+  activityLog?: ActivityLog[];
 }
 
 export interface LeadsTableProps {
