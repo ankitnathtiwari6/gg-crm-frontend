@@ -74,11 +74,7 @@ const formatCreatedAt = (createdAt?: string | Date): string => {
   return moment(createdAt).fromNow();
 };
 
-interface LeadsTableProps {
-  lastLeadElementRef?: (node: HTMLTableRowElement | HTMLDivElement) => void;
-}
-
-const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
+const LeadsTable: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const leads = useSelector(selectLeads);
   const selectedLeadId = useSelector((state: RootState) => state.leads.selectedLeadId);
@@ -186,26 +182,21 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
       <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table className="min-w-full">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
+            <tr className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Lead</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned To</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">AI Score</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags / Stage</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Dates</th>
               <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {leads.map((lead, index) => (
+            {leads.map((lead) => (
               <tr
                 key={lead.id}
-                ref={
-                  index === leads.length - 1 && lastLeadElementRef
-                    ? (node) => { if (node instanceof HTMLTableRowElement) lastLeadElementRef(node); }
-                    : undefined
-                }
                 className={`cursor-pointer transition-colors duration-100 hover:bg-indigo-50/40 ${
                   selectedLeadId === lead.id ? "bg-indigo-50 border-l-2 border-indigo-400" : ""
                 }`}
@@ -309,9 +300,14 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
                   </div>
                 </td>
 
-                {/* Created */}
+                {/* Dates */}
                 <td className="px-5 py-3.5">
-                  <div className="text-xs text-gray-500 whitespace-nowrap">{formatCreatedAt(lead.createdAt)}</div>
+                  <div className="text-xs text-gray-500 whitespace-nowrap">
+                    <span className="text-gray-400">Created: </span>{formatCreatedAt(lead.createdAt)}
+                  </div>
+                  <div className="text-xs text-gray-400 whitespace-nowrap mt-0.5">
+                    <span className="text-gray-400">Updated: </span>{formatCreatedAt(lead.updatedAt)}
+                  </div>
                 </td>
 
                 {/* Edit */}
@@ -333,14 +329,9 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ lastLeadElementRef }) => {
 
       {/* ── Mobile Cards ── */}
       <div className="md:hidden space-y-3">
-        {leads.map((lead, index) => (
+        {leads.map((lead) => (
           <div
             key={lead.id}
-            ref={
-              index === leads.length - 1 && lastLeadElementRef
-                ? (node) => { if (node instanceof HTMLDivElement) lastLeadElementRef(node); }
-                : undefined
-            }
             className={`bg-white rounded-xl shadow-sm border p-4 cursor-pointer transition-colors ${
               selectedLeadId === lead.id ? "border-indigo-300 bg-indigo-50/30" : "border-gray-100"
             }`}

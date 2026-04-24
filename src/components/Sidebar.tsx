@@ -182,7 +182,7 @@ const Sidebar: React.FC = () => {
   // Desktop sidebar
   const DesktopSidebar = (
     <div
-      className={`hidden md:flex transition-all duration-300 bg-[#28282B] text-white shadow-lg h-screen flex-col fixed top-0 left-0 z-10 ${
+      className={`hidden md:flex transition-all duration-300 bg-[#28282B] text-white shadow-lg h-screen flex-col fixed top-0 left-0 z-30 ${
         collapsed ? "w-16" : "w-56"
       }`}
     >
@@ -270,7 +270,7 @@ const Sidebar: React.FC = () => {
   const MobileSidebar = (
     <>
       {/* Mobile burger button */}
-      <div className="md:hidden fixed top-0 left-0 z-20 p-4">
+      <div className="md:hidden fixed top-0 left-0 z-50 p-4">
         <button
           onClick={toggleMobile}
           className="text-gray-800 hover:text-gray-600 focus:outline-none"
@@ -295,7 +295,7 @@ const Sidebar: React.FC = () => {
 
       {/* Mobile drawer */}
       <div
-        className={`md:hidden fixed inset-0 z-30 transition-all duration-300 ${
+        className={`md:hidden fixed inset-0 z-40 transition-all duration-300 ${
           mobileOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       >

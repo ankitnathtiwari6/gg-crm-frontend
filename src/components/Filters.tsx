@@ -105,7 +105,12 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
         >
           <option value="">All Countries</option>
           <option value="Russia">Russia</option>
+          <option value="Uzbekistan">Uzbekistan</option>
           <option value="Kazakhstan">Kazakhstan</option>
+          <option value="Kyrgyzstan">Kyrgyzstan</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Bangladesh">Bangladesh</option>
+          <option value="Nepal">Nepal</option>
           <option value="India">India</option>
           <option value="Other">Other</option>
         </select>

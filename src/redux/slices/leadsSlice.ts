@@ -18,6 +18,9 @@ export interface LeadsFilters {
   };
 }
 
+export type SortField = "lastInteraction" | "createdAt" | "leadQualityScore";
+export type SortOrder = "asc" | "desc";
+
 interface LeadsState {
   leads: Lead[];
   totalLeads: number;
@@ -27,6 +30,8 @@ interface LeadsState {
   itemsPerPage: number;
   searchQuery: string;
   filters: LeadsFilters;
+  sortBy: SortField;
+  sortOrder: SortOrder;
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
@@ -55,6 +60,8 @@ const initialState: LeadsState = {
       end: "",
     },
   },
+  sortBy: "lastInteraction" as SortField,
+  sortOrder: "desc" as SortOrder,
   isLoading: false,
   isLoadingMore: false,
   hasMore: true,
@@ -66,17 +73,20 @@ export const fetchLeads = createAsyncThunk(
   "leads/fetchLeads",
   async (append: boolean = false, { getState, rejectWithValue }) => {
     const state = getState() as RootState;
-    const { currentPage, itemsPerPage, searchQuery, filters } = state.leads;
+    const { currentPage, itemsPerPage, searchQuery, filters, sortBy, sortOrder } = state.leads;
 
     try {
       const params: Record<string, any> = {
         page: currentPage,
         limit: itemsPerPage,
+        sortBy,
+        sortOrder,
       };
       if (searchQuery) params.search = searchQuery;
       if (filters.neetStatus) params.neetStatus = filters.neetStatus;
       if (filters.neetScoreRange[0] > 0) params.minScore = filters.neetScoreRange[0];
       if (filters.neetScoreRange[1] < 720) params.maxScore = filters.neetScoreRange[1];
+      // Both set: already covered above; each sends independently so backend handles partial ranges
       if (filters.country) params.country = filters.country;
       if (filters.location) params.location = filters.location;
       if (filters.assignedTo) {
@@ -176,6 +186,12 @@ const leadsSlice = createSlice({
       state.leads = [];
       state.hasMore = true;
     },
+    setSort: (state, action: PayloadAction<{ sortBy: SortField; sortOrder: SortOrder }>) => {
+      state.sortBy = action.payload.sortBy;
+      state.sortOrder = action.payload.sortOrder;
+      state.currentPage = 1;
+      state.leads = [];
+    },
     setPage: (state, action: PayloadAction<number>) => {
       state.currentPage = action.payload;
     },
@@ -252,6 +268,7 @@ export const {
   addTagFilter,
   removeTagFilter,
   setAssignedToFilter,
+  setSort,
   setPage,
   incrementPage,
   resetFilters,
@@ -278,5 +295,6 @@ export const selectPagination = (state: RootState) => ({
   itemsPerPage: state.leads.itemsPerPage,
 });
 export const selectTodayLeadsCount = (state: RootState) => state.leads.todayLeadsCount;
+export const selectSort = (state: RootState) => ({ sortBy: state.leads.sortBy, sortOrder: state.leads.sortOrder });
 
 export default leadsSlice.reducer;

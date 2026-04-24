@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import LeadsTable from "../components/LeadsTable";
 import LeadStats from "../components/LeadStats";
@@ -6,19 +6,18 @@ import { Filters } from "../components/Filters";
 import { SearchBar } from "../components/Search";
 import {
   fetchLeads,
-  incrementPage,
+  setPage,
   setSearchQuery,
   setFilters,
   clearError,
   selectLeadsState,
   selectLeads,
   selectIsLoading,
-  selectIsLoadingMore,
-  selectHasMore,
   selectError,
   selectFilters,
   selectPagination,
   selectTodayLeadsCount,
+  selectSort,
 } from "../redux/slices/leadsSlice";
 import { AppDispatch } from "../redux/store";
 
@@ -26,37 +25,20 @@ const HomePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const leads = useSelector(selectLeads);
   const isLoading = useSelector(selectIsLoading);
-  const isLoadingMore = useSelector(selectIsLoadingMore);
-  const hasMore = useSelector(selectHasMore);
   const error = useSelector(selectError);
   const filters = useSelector(selectFilters);
-  const { totalLeads } = useSelector(selectPagination);
+  const { currentPage, totalPages, totalLeads, itemsPerPage } = useSelector(selectPagination);
   const { searchQuery } = useSelector(selectLeadsState);
   const todayLeadsCount = useSelector(selectTodayLeadsCount);
+  const { sortBy, sortOrder } = useSelector(selectSort);
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [jumpInput, setJumpInput] = useState("");
 
-  // IntersectionObserver for infinite scroll
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const lastLeadRef = useCallback(
-    (node: HTMLTableRowElement | HTMLDivElement) => {
-      if (isLoading || isLoadingMore) return;
-      if (observerRef.current) observerRef.current.disconnect();
-      observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          dispatch(incrementPage());
-          dispatch(fetchLeads(true));
-        }
-      });
-      if (node) observerRef.current.observe(node);
-    },
-    [isLoading, isLoadingMore, hasMore, dispatch]
-  );
-
-  // Initial fetch and re-fetch when filters/search change (always fresh)
+  // Fetch on page / filter / search / sort change
   useEffect(() => {
     dispatch(fetchLeads(false));
-  }, [dispatch, filters, searchQuery]);
+  }, [dispatch, currentPage, filters, searchQuery, sortBy, sortOrder]);
 
   const handleSearchChange = (query: string) => {
     dispatch(setSearchQuery(query));
@@ -70,6 +52,31 @@ const HomePage: React.FC = () => {
     dispatch(fetchLeads(false));
   };
 
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    dispatch(setPage(page));
+  };
+
+  const handleJump = (e: React.FormEvent) => {
+    e.preventDefault();
+    const n = parseInt(jumpInput, 10);
+    if (!isNaN(n)) goToPage(n);
+    setJumpInput("");
+  };
+
+  // Build page number list with ellipsis
+  const getPageNumbers = (): (number | "…")[] => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | "…")[] = [1];
+    if (currentPage > 3) pages.push("…");
+    for (let p = Math.max(2, currentPage - 1); p <= Math.min(totalPages - 1, currentPage + 1); p++) {
+      pages.push(p);
+    }
+    if (currentPage < totalPages - 2) pages.push("…");
+    pages.push(totalPages);
+    return pages;
+  };
+
   const activeFilterCount = [
     filters.neetStatus,
     filters.country,
@@ -80,6 +87,9 @@ const HomePage: React.FC = () => {
     filters.isQualified,
   ].filter(Boolean).length + filters.tags.length;
 
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalLeads);
+
   return (
     <div className="flex h-screen bg-gray-50">
       <div className="flex-1 flex flex-col md:ml-20 min-w-0 transition-all duration-300">
@@ -89,7 +99,6 @@ const HomePage: React.FC = () => {
             <SearchBar searchQuery={searchQuery} setSearchQuery={handleSearchChange} />
           </div>
 
-          {/* Filter icon */}
           <button
             onClick={() => setFilterDrawerOpen(true)}
             className="relative flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-sm text-gray-600 transition-colors"
@@ -140,28 +149,87 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <>
-              <LeadsTable lastLeadElementRef={lastLeadRef} />
-
-              {/* Load more indicator */}
-              {isLoadingMore && (
-                <div className="flex items-center justify-center py-6 gap-2 text-sm text-gray-400">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-400"></div>
-                  Loading more leads…
-                </div>
-              )}
-
-              {!hasMore && leads.length > 0 && (
-                <div className="text-center py-6 text-xs text-gray-400">
-                  All {totalLeads} leads loaded
-                </div>
-              )}
-            </>
+            <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
+              <LeadsTable />
+            </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 0 && (
+          <div className="bg-white border-t border-gray-100 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            {/* Count */}
+            <p className="text-xs text-gray-500 whitespace-nowrap">
+              {totalLeads > 0 ? `${startItem}–${endItem} of ${totalLeads} leads` : "0 leads"}
+            </p>
+
+            {/* Page buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1 || isLoading}
+                className="px-2 py-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {getPageNumbers().map((p, i) =>
+                p === "…" ? (
+                  <span key={`ellipsis-${i}`} className="px-2 py-1 text-xs text-gray-400">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => goToPage(p as number)}
+                    disabled={isLoading}
+                    className={`min-w-[32px] px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      currentPage === p
+                        ? "bg-indigo-500 text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages || isLoading}
+                className="px-2 py-1.5 rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Jump to page */}
+            <form onSubmit={handleJump} className="flex items-center gap-1.5">
+              <span className="text-xs text-gray-400 whitespace-nowrap">Go to</span>
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={jumpInput}
+                onChange={(e) => setJumpInput(e.target.value)}
+                placeholder="pg"
+                className="w-14 px-2 py-1 text-xs border border-gray-200 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md disabled:opacity-40"
+              >
+                Go
+              </button>
+            </form>
+          </div>
+        )}
       </div>
 
-      {/* ── Filter Drawer (right) ── */}
+      {/* Filter Drawer */}
       {filterDrawerOpen && (
         <>
           <div
