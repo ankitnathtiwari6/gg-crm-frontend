@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
 import {
   setSelectedLead,
   selectLeads,
+  selectIsLoadingMore,
+  selectHasMore,
   updateLead,
+  deleteLead,
+  incrementPage,
+  fetchLeads,
 } from "../redux/slices/leadsSlice";
+
+const ADMIN_EMAIL = "ankitnathtiwari@gmail.com";
 import LeadProfile from "./LeadProfile";
 import Chat from "./Chat";
 import CompactEditModal from "./CompactEditModal";
@@ -27,19 +34,6 @@ const getScoreLabel = (score: number | null | undefined): string => {
   return `${score} · Junk`;
 };
 
-const getTagColor = (index: number): string => {
-  const colors = [
-    "bg-blue-100 text-blue-800",
-    "bg-green-100 text-green-800",
-    "bg-yellow-100 text-yellow-800",
-    "bg-purple-100 text-purple-800",
-    "bg-pink-100 text-pink-800",
-    "bg-indigo-100 text-indigo-800",
-    "bg-red-100 text-red-800",
-    "bg-teal-100 text-teal-800",
-  ];
-  return colors[index % colors.length];
-};
 
 const getStageLabel = (stage?: string): string => {
   switch (stage) {
@@ -79,6 +73,28 @@ const LeadsTable: React.FC = () => {
   const leads = useSelector(selectLeads);
   const selectedLeadId = useSelector((state: RootState) => state.leads.selectedLeadId);
   const currentUser = useSelector((state: RootState) => state.auth.user);
+  const isLoadingMore = useSelector(selectIsLoadingMore);
+  const hasMore = useSelector(selectHasMore);
+
+  // ── Infinite scroll sentinel ──────────────────────────────────────────────
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isLoadingMore) return;
+      if (observerRef.current) observerRef.current.disconnect();
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+            dispatch(incrementPage());
+            dispatch(fetchLeads(true));
+          }
+        },
+        { threshold: 0.1 }
+      );
+      if (node) observerRef.current.observe(node);
+    },
+    [isLoadingMore, hasMore, dispatch]
+  );
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [slideOverOpen, setSlideOverOpen] = useState(false);
@@ -138,6 +154,14 @@ const LeadsTable: React.FC = () => {
     setShowAssignPopup(leadId === showAssignPopup ? null : leadId);
   };
 
+  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+
+  const handleDeleteLead = (leadId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this lead and all associated chat history? This cannot be undone.")) return;
+    dispatch(deleteLead(leadId));
+  };
+
   if (!leads || leads.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 py-16 text-center text-gray-400">
@@ -188,8 +212,9 @@ const LeadsTable: React.FC = () => {
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned To</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">AI Score</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags / Stage</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Dates</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stage</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created At</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Active At</th>
               <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit</th>
             </tr>
           </thead>
@@ -279,47 +304,50 @@ const LeadsTable: React.FC = () => {
                   )}
                 </td>
 
-                {/* Tags / Stage */}
+                {/* Stage */}
                 <td className="px-5 py-3.5">
-                  <div className="flex flex-wrap gap-1 max-w-[180px]">
-                    {lead.tags?.slice(0, 2).map((tag, i) => (
-                      <span key={i} className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTagColor(i)}`}>
-                        {tag}
-                      </span>
-                    ))}
-                    {(lead.tags?.length ?? 0) > 2 && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                        +{(lead.tags?.length ?? 0) - 2}
-                      </span>
-                    )}
-                    {lead.stage && (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>
-                        {getStageLabel(lead.stage)}
-                      </span>
-                    )}
-                  </div>
+                  {lead.stage ? (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>
+                      {getStageLabel(lead.stage)}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
                 </td>
 
-                {/* Dates */}
+                {/* Created At */}
                 <td className="px-5 py-3.5">
-                  <div className="text-xs text-gray-500 whitespace-nowrap">
-                    <span className="text-gray-400">Created: </span>{formatCreatedAt(lead.createdAt)}
-                  </div>
-                  <div className="text-xs text-gray-400 whitespace-nowrap mt-0.5">
-                    <span className="text-gray-400">Updated: </span>{formatCreatedAt(lead.updatedAt)}
-                  </div>
+                  <div className="text-xs text-gray-500 whitespace-nowrap">{formatCreatedAt(lead.createdAt)}</div>
                 </td>
 
-                {/* Edit */}
+                {/* Active At */}
+                <td className="px-5 py-3.5">
+                  <div className="text-xs text-gray-500 whitespace-nowrap">{formatCreatedAt(lead.lastInteraction)}</div>
+                </td>
+
+                {/* Edit / Delete */}
                 <td className="px-5 py-3.5 text-center">
-                  <button
-                    onClick={(e) => handleEditLead(lead.id, e)}
-                    className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      onClick={(e) => handleEditLead(lead.id, e)}
+                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => handleDeleteLead(lead.id, e)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                        title="Delete lead"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -347,14 +375,26 @@ const LeadsTable: React.FC = () => {
                   <div className="text-xs text-gray-400">{lead?.source || "WhatsApp"}</div>
                 </div>
               </div>
-              <button
-                onClick={(e) => handleEditLead(lead.id, e)}
-                className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-md"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => handleEditLead(lead.id, e)}
+                  className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-md"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+                {isAdmin && (
+                  <button
+                    onClick={(e) => handleDeleteLead(lead.id, e)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-md"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
@@ -381,19 +421,24 @@ const LeadsTable: React.FC = () => {
               <p className="mt-1 text-xs text-gray-400 truncate">{lead.leadQualityScoreReason}</p>
             )}
 
-            <div className="mt-2 flex flex-wrap gap-1">
-              {lead.tags?.slice(0, 2).map((tag, i) => (
-                <span key={i} className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTagColor(i)}`}>{tag}</span>
-              ))}
-              {lead.stage && (
+            {lead.stage && (
+              <div className="mt-2">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>
                   {getStageLabel(lead.stage)}
                 </span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      {/* ── Infinite scroll sentinel ── */}
+      <div ref={sentinelRef} className="h-2" />
+      {isLoadingMore && (
+        <div className="flex justify-center py-5">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-400" />
+        </div>
+      )}
 
       {/* ── Slide-Over Panel ── */}
       {slideOverOpen && (

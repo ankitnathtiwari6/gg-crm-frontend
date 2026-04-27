@@ -109,6 +109,10 @@ export const leadService = {
     return apiRequest(`${endpoints.leads.update}/${id}`, "PUT", data, token);
   },
 
+  deleteLead: (id: string, token: string): any => {
+    return apiRequest(`/leads/${id}`, "DELETE", undefined, token);
+  },
+
   addRemark: async (id: string, text: string, token: string): Promise<any> => {
     return apiRequest(`/leads/${id}/remarks`, "POST", { text }, token);
   },

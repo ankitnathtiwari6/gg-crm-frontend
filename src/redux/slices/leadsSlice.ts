@@ -16,6 +16,10 @@ export interface LeadsFilters {
     start: string;
     end: string;
   };
+  activeDateRange: {
+    start: string;
+    end: string;
+  };
 }
 
 export type SortField = "lastInteraction" | "createdAt" | "leadQualityScore";
@@ -56,6 +60,10 @@ const initialState: LeadsState = {
     tags: [],
     assignedTo: "",
     dateRange: {
+      start: "",
+      end: "",
+    },
+    activeDateRange: {
       start: "",
       end: "",
     },
@@ -100,6 +108,8 @@ export const fetchLeads = createAsyncThunk(
       if (filters.tags && filters.tags.length > 0) params.tags = filters.tags;
       if (filters.dateRange.start) params.startDate = filters.dateRange.start;
       if (filters.dateRange.end) params.endDate = filters.dateRange.end;
+      if (filters.activeDateRange.start) params.activeStartDate = filters.activeDateRange.start;
+      if (filters.activeDateRange.end) params.activeEndDate = filters.activeDateRange.end;
 
       const token = state?.auth?.token ?? "";
       const response = await api.lead.getLeads(token, params);
@@ -120,6 +130,20 @@ export const fetchLeads = createAsyncThunk(
         return rejectWithValue(error.response.data.message || "An error occurred");
       }
       return rejectWithValue("Failed to load leads. Please try again.");
+    }
+  }
+);
+
+export const deleteLead = createAsyncThunk(
+  "leads/deleteLead",
+  async (leadId: string, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as RootState;
+      const response = await api.lead.deleteLead(leadId, state?.auth?.token ?? "");
+      if (response.success) return leadId;
+      return rejectWithValue(response.message || "Failed to delete lead");
+    } catch {
+      return rejectWithValue("Failed to delete lead. Please try again.");
     }
   }
 );
@@ -243,6 +267,11 @@ const leadsSlice = createSlice({
         if (!action.meta.arg) {
           state.leads = [];
         }
+      })
+      .addCase(deleteLead.fulfilled, (state, action) => {
+        state.leads = state.leads.filter((l) => l.id !== action.payload);
+        state.totalLeads = Math.max(0, state.totalLeads - 1);
+        if (state.selectedLeadId === action.payload) state.selectedLeadId = null;
       })
       .addCase(updateLead.pending, (state) => {
         state.error = null;

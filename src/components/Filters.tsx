@@ -13,6 +13,10 @@ interface FilterValues {
     start: string;
     end: string;
   };
+  activeDateRange: {
+    start: string;
+    end: string;
+  };
 }
 
 interface FiltersProps {
@@ -36,6 +40,10 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
     setFilters({ dateRange: { ...filters.dateRange, [key]: value } });
   };
 
+  const updateActiveDateRange = (key: "start" | "end", value: string) => {
+    setFilters({ activeDateRange: { ...filters.activeDateRange, [key]: value } });
+  };
+
   const handleTagToggle = (tag: string) => {
     const next = filters.tags.includes(tag)
       ? filters.tags.filter((t) => t !== tag)
@@ -51,6 +59,8 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
       filters.assignedTo,
       filters.dateRange.start,
       filters.dateRange.end,
+      filters.activeDateRange.start,
+      filters.activeDateRange.end,
       filters.isQualified,
     ].filter(Boolean).length + filters.tags.length;
   };
@@ -73,6 +83,7 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
               isQualified: false,
               tags: [],
               dateRange: { start: "", end: "" },
+              activeDateRange: { start: "", end: "" },
             })
           }
           className="w-full py-2 text-sm text-red-500 hover:text-red-700 border border-red-100 hover:border-red-200 rounded-lg bg-red-50/50 transition-colors"
@@ -144,9 +155,9 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
         </select>
       </div>
 
-      {/* Date Range */}
+      {/* Created At */}
       <div>
-        <label className={labelClass}>Date Range</label>
+        <label className={labelClass}>Created At</label>
         <div className="space-y-2">
           <div>
             <span className="text-xs text-gray-400 mb-1 block">From</span>
@@ -163,6 +174,31 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
               type="date"
               value={filters.dateRange.end}
               onChange={(e) => updateDateRange("end", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Active Date */}
+      <div>
+        <label className={labelClass}>Active Date</label>
+        <div className="space-y-2">
+          <div>
+            <span className="text-xs text-gray-400 mb-1 block">From</span>
+            <input
+              type="date"
+              value={filters.activeDateRange.start}
+              onChange={(e) => updateActiveDateRange("start", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <span className="text-xs text-gray-400 mb-1 block">To</span>
+            <input
+              type="date"
+              value={filters.activeDateRange.end}
+              onChange={(e) => updateActiveDateRange("end", e.target.value)}
               className={inputClass}
             />
           </div>

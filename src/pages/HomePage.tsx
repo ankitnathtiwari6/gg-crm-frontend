@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import LeadsTable from "../components/LeadsTable";
 import LeadStats from "../components/LeadStats";
@@ -32,13 +32,16 @@ const HomePage: React.FC = () => {
   const todayLeadsCount = useSelector(selectTodayLeadsCount);
   const { sortBy, sortOrder } = useSelector(selectSort);
 
+  const tableContainerRef = useRef<HTMLDivElement>(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [jumpInput, setJumpInput] = useState("");
 
-  // Fetch on page / filter / search / sort change
+  // Fetch on filter / search / sort change (fresh replace).
+  // currentPage is intentionally excluded — pagination clicks and infinite scroll
+  // dispatch fetchLeads directly so they control append vs. replace themselves.
   useEffect(() => {
     dispatch(fetchLeads(false));
-  }, [dispatch, currentPage, filters, searchQuery, sortBy, sortOrder]);
+  }, [dispatch, filters, searchQuery, sortBy, sortOrder]);
 
   const handleSearchChange = (query: string) => {
     dispatch(setSearchQuery(query));
@@ -53,8 +56,25 @@ const HomePage: React.FC = () => {
   };
 
   const goToPage = (page: number) => {
-    if (page < 1 || page > totalPages) return;
+    if (page < 1 || page > totalPages || isLoading) return;
+
+    // If the data for this page is already in the infinite-scroll list, scroll to it
+    const pageStartIndex = (page - 1) * itemsPerPage;
+    if (pageStartIndex < leads.length) {
+      dispatch(setPage(page));
+      const container = tableContainerRef.current;
+      if (container) {
+        const scrollTop =
+          page === 1
+            ? 0
+            : (pageStartIndex / leads.length) * container.scrollHeight;
+        container.scrollTo({ top: scrollTop, behavior: "smooth" });
+      }
+      return;
+    }
+
     dispatch(setPage(page));
+    dispatch(fetchLeads(false));
   };
 
   const handleJump = (e: React.FormEvent) => {
@@ -84,6 +104,8 @@ const HomePage: React.FC = () => {
     filters.assignedTo,
     filters.dateRange.start,
     filters.dateRange.end,
+    filters.activeDateRange.start,
+    filters.activeDateRange.end,
     filters.isQualified,
   ].filter(Boolean).length + filters.tags.length;
 
@@ -140,7 +162,7 @@ const HomePage: React.FC = () => {
         )}
 
         {/* Table */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div ref={tableContainerRef} className="flex-1 overflow-y-auto p-4">
           {isLoading && leads.length === 0 ? (
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
