@@ -20,6 +20,25 @@ export interface LeadsFilters {
     start: string;
     end: string;
   };
+  stage: string;
+  aiEngaged: boolean;
+  minQualityScore: number;
+}
+
+export interface FunnelStats {
+  total: number;
+  aiEngaged: number;
+  hot: number;
+  warm: number;
+  cold: number;
+  notResponding: number;
+  callStarted: number;
+  followUp: number;
+  docsRequested: number;
+  docsReceived: number;
+  applied: number;
+  won: number;
+  lost: number;
 }
 
 export type SortField = "lastInteraction" | "createdAt" | "leadQualityScore";
@@ -41,6 +60,8 @@ interface LeadsState {
   hasMore: boolean;
   error: string | null;
   selectedLeadId: string | null;
+  funnelStats: FunnelStats | null;
+  funnelStatsLoading: boolean;
 }
 
 const initialState: LeadsState = {
@@ -67,6 +88,9 @@ const initialState: LeadsState = {
       start: "",
       end: "",
     },
+    stage: "",
+    aiEngaged: false,
+    minQualityScore: 0,
   },
   sortBy: "lastInteraction" as SortField,
   sortOrder: "desc" as SortOrder,
@@ -75,6 +99,8 @@ const initialState: LeadsState = {
   hasMore: true,
   error: null,
   selectedLeadId: null,
+  funnelStats: null,
+  funnelStatsLoading: false,
 };
 
 export const fetchLeads = createAsyncThunk(
@@ -110,6 +136,9 @@ export const fetchLeads = createAsyncThunk(
       if (filters.dateRange.end) params.endDate = filters.dateRange.end;
       if (filters.activeDateRange.start) params.activeStartDate = filters.activeDateRange.start;
       if (filters.activeDateRange.end) params.activeEndDate = filters.activeDateRange.end;
+      if (filters.stage) params.stage = filters.stage;
+      if (filters.aiEngaged) params.aiEngaged = true;
+      if (filters.minQualityScore > 0) params.minQualityScore = filters.minQualityScore;
 
       const token = state?.auth?.token ?? "";
       const response = await api.lead.getLeads(token, params);
@@ -130,6 +159,21 @@ export const fetchLeads = createAsyncThunk(
         return rejectWithValue(error.response.data.message || "An error occurred");
       }
       return rejectWithValue("Failed to load leads. Please try again.");
+    }
+  }
+);
+
+export const fetchFunnelStats = createAsyncThunk(
+  "leads/fetchFunnelStats",
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as RootState;
+      const token = state?.auth?.token ?? "";
+      const response = await api.lead.getFunnelStats(token);
+      if (response.success) return response.stats as import("./leadsSlice").FunnelStats;
+      return rejectWithValue("Failed to fetch funnel stats");
+    } catch {
+      return rejectWithValue("Failed to fetch funnel stats");
     }
   }
 );
@@ -234,6 +278,30 @@ const leadsSlice = createSlice({
     setSelectedLead: (state, action: PayloadAction<string | null>) => {
       state.selectedLeadId = action.payload;
     },
+    setStageFilter: (state, action: PayloadAction<string>) => {
+      state.filters.stage = action.payload;
+      state.filters.aiEngaged = false;
+      state.filters.minQualityScore = 0;
+      state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
+    },
+    setAiEngagedFilter: (state, action: PayloadAction<boolean>) => {
+      state.filters.aiEngaged = action.payload;
+      state.filters.stage = "";
+      state.filters.minQualityScore = 0;
+      state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
+    },
+    setHotFilter: (state, action: PayloadAction<number>) => {
+      state.filters.minQualityScore = action.payload;
+      state.filters.stage = "";
+      state.filters.aiEngaged = false;
+      state.currentPage = 1;
+      state.leads = [];
+      state.hasMore = true;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -286,6 +354,16 @@ const leadsSlice = createSlice({
       })
       .addCase(updateLead.rejected, (state, action) => {
         state.error = action.payload as string;
+      })
+      .addCase(fetchFunnelStats.pending, (state) => {
+        state.funnelStatsLoading = true;
+      })
+      .addCase(fetchFunnelStats.fulfilled, (state, action) => {
+        state.funnelStatsLoading = false;
+        state.funnelStats = action.payload;
+      })
+      .addCase(fetchFunnelStats.rejected, (state) => {
+        state.funnelStatsLoading = false;
       });
   },
 });
@@ -303,6 +381,9 @@ export const {
   resetFilters,
   clearError,
   setSelectedLead,
+  setStageFilter,
+  setAiEngagedFilter,
+  setHotFilter,
 } = leadsSlice.actions;
 
 export const selectLeadsState = (state: RootState) => state.leads;
@@ -325,5 +406,8 @@ export const selectPagination = (state: RootState) => ({
 });
 export const selectTodayLeadsCount = (state: RootState) => state.leads.todayLeadsCount;
 export const selectSort = (state: RootState) => ({ sortBy: state.leads.sortBy, sortOrder: state.leads.sortOrder });
+export const selectFunnelStats = (state: RootState) => state.leads.funnelStats;
+export const selectFunnelStatsLoading = (state: RootState) => state.leads.funnelStatsLoading;
+export const selectStageFilter = (state: RootState) => state.leads.filters.stage;
 
 export default leadsSlice.reducer;

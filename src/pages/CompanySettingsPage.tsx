@@ -5,6 +5,7 @@ import {
   fetchCompany,
   createCompany,
   updateCompany,
+  updateCompanyTags,
   addUser,
   removeUser,
   addWhatsapp,
@@ -13,14 +14,13 @@ import {
   clearError,
   WhatsappNumber,
 } from "../redux/slices/companySlice";
-
-const COMPANY_ID_KEY = "companyId";
+import { DEFAULT_TAG_OPTIONS } from "../hooks/useTagOptions";
 
 const CompanySettingsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { company, loading, error } = useSelector((state: RootState) => state.company);
+  const authUser = useSelector((state: RootState) => state.auth.user);
 
-  const [companyId, setCompanyId] = useState(localStorage.getItem(COMPANY_ID_KEY) || "");
   const [newCompanyName, setNewCompanyName] = useState("");
   const [editName, setEditName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -38,16 +38,18 @@ const CompanySettingsPage: React.FC = () => {
     verifyToken: "",
   });
 
+  // Tag management
+  const [newTag, setNewTag] = useState("");
+
+  // Auto-load the user's associated company on mount
   useEffect(() => {
-    if (companyId) {
-      dispatch(fetchCompany(companyId));
+    if (authUser?.companyId) {
+      dispatch(fetchCompany(authUser.companyId));
     }
-  }, [companyId]);
+  }, [authUser?.companyId]);
 
   useEffect(() => {
     if (company) {
-      localStorage.setItem(COMPANY_ID_KEY, company._id);
-      setCompanyId(company._id);
       setEditName(company.name);
     }
   }, [company]);
@@ -99,8 +101,28 @@ const CompanySettingsPage: React.FC = () => {
     if (company) dispatch(toggleWhatsapp({ id: company._id, phoneNumberId }));
   };
 
+  const currentTags = company?.tags ?? [];
+
+  const handleAddTag = (e: React.FormEvent) => {
+    e.preventDefault();
+    const tag = newTag.trim();
+    if (!tag || !company || currentTags.includes(tag)) return;
+    dispatch(updateCompanyTags({ id: company._id, tags: [...currentTags, tag] }));
+    setNewTag("");
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    if (!company) return;
+    dispatch(updateCompanyTags({ id: company._id, tags: currentTags.filter((t) => t !== tag) }));
+  };
+
+  const handleRestoreDefaults = () => {
+    if (!company) return;
+    dispatch(updateCompanyTags({ id: company._id, tags: DEFAULT_TAG_OPTIONS }));
+  };
+
   // ── No company yet ────────────────────────────────────────────────────────
-  if (!company && !companyId) {
+  if (!company && !authUser?.companyId) {
     return (
       <div className="min-h-screen bg-[#fffdf9] flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-md">
@@ -123,19 +145,6 @@ const CompanySettingsPage: React.FC = () => {
               {loading ? "Creating..." : "Create Company"}
             </button>
           </form>
-
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <p className="text-xs text-gray-400 mb-2">Already have a company ID?</p>
-            <input
-              type="text"
-              placeholder="Paste company ID"
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              onBlur={(e) => {
-                const val = e.target.value.trim();
-                if (val) { setCompanyId(val); dispatch(fetchCompany(val)); }
-              }}
-            />
-          </div>
         </div>
       </div>
     );
@@ -204,6 +213,67 @@ const CompanySettingsPage: React.FC = () => {
               />
             </button>
           </div>
+        </div>
+
+        {/* ── Tags ── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Lead Tags</h2>
+              <p className="text-xs text-gray-400 mt-1">
+                {currentTags.length === 0
+                  ? "No custom tags set — default tags are in use."
+                  : `${currentTags.length} custom tag${currentTags.length !== 1 ? "s" : ""} active`}
+              </p>
+            </div>
+            {currentTags.length === 0 && (
+              <button
+                onClick={handleRestoreDefaults}
+                className="text-xs text-indigo-500 hover:text-indigo-700"
+              >
+                Load defaults
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-4 min-h-[2rem]">
+            {currentTags.length === 0 ? (
+              <p className="text-xs text-gray-400 italic">Using system defaults</p>
+            ) : (
+              currentTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                >
+                  {tag}
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-gray-400 hover:text-red-500 leading-none"
+                    title={`Remove "${tag}"`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+
+          <form onSubmit={handleAddTag} className="flex gap-2">
+            <input
+              type="text"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              placeholder="Add a tag…"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            />
+            <button
+              type="submit"
+              disabled={loading || !newTag.trim()}
+              className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 disabled:opacity-40"
+            >
+              Add
+            </button>
+          </form>
         </div>
 
         {/* ── Team members ── */}

@@ -5,15 +5,9 @@ import { Lead, Remark, ActivityLog } from "../types";
 import { updateLead } from "../redux/slices/leadsSlice";
 import { AppDispatch, RootState } from "../redux/store";
 import { leadService } from "../services/api.service";
+import { useTagOptions } from "../hooks/useTagOptions";
 
 // ── Constants ────────────────────────────────────────────────────────────────
-
-export const TAG_OPTIONS = [
-  "Interested", "Most Interested", "Least Interested", "Not Interested",
-  "Not Picking Call", "Number Busy", "Invalid Phone Number",
-  "Invalid Whatsapp Number", "Will Tell Later", "Next Year",
-  "India Enquiry", "Junk",
-];
 const QUALIFICATION_TAGS = ["Qualified"];
 
 const STAGE_OPTIONS = [
@@ -114,6 +108,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
   const dispatch = useDispatch<AppDispatch>();
   const token = useSelector((state: RootState) => state.auth.token) ?? "";
   const isSavingRedux = useSelector((state: RootState) => state.leads.isLoading);
+  const tagOptions = useTagOptions();
 
   // Form state — resets when a different lead is opened
   const [form, setForm] = useState<Lead>({ ...lead });
@@ -226,8 +221,13 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
           <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${scoreBadge.color}`}>
             {scoreBadge.label}
           </span>
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${stageBadge.color}`}>
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${stageBadge.color} flex items-center gap-1`}>
             {stageBadge.label}
+            {lead.stageUpdatedBy === "ai" && (
+              <span title="Stage set by AI" className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-white/40 text-[8px] font-bold leading-none">
+                AI
+              </span>
+            )}
           </span>
           {lead.qualifiedLead && (
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
@@ -364,7 +364,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
             <div>
               <label className={labelCls}>Interest / Tags</label>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                {TAG_OPTIONS.map((tag) => (
+                {tagOptions.map((tag) => (
                   <button
                     key={tag}
                     type="button"

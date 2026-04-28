@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../redux/store";
 import { Lead } from "../types";
 import { updateLead } from "../redux/slices/leadsSlice";
+import { useTagOptions, DEFAULT_TAG_OPTIONS } from "../hooks/useTagOptions";
 
 interface EditModalProps {
   leadId: string | null;
@@ -10,21 +11,9 @@ interface EditModalProps {
   onClose: () => void;
 }
 
-// Predefined tag options
-export const TAG_OPTIONS = [
-  "Interested",
-  "Most Interested",
-  "Least Interested",
-  "Not Interested",
-  "Not Picking Call",
-  "Number Busy",
-  "Invalid Phone Number",
-  "Invalid Whatsapp Number",
-  "Will Tell Later",
-  "Next Year",
-  "India Enquiry",
-  "Junk",
-];
+// Exported for backward compat — Filters.tsx imports this.
+// At runtime the hook is used so company tags take precedence.
+export const TAG_OPTIONS = DEFAULT_TAG_OPTIONS;
 
 // Add "Qualified" as a special tag
 const QUALIFICATION_TAGS = ["Qualified"];
@@ -35,6 +24,7 @@ const CompactEditModal: React.FC<EditModalProps> = ({
   onClose,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const tagOptions = useTagOptions();
 
   // Get lead from Redux store
   const leads = useSelector((state: RootState) => state.leads.leads);
@@ -265,7 +255,7 @@ const CompactEditModal: React.FC<EditModalProps> = ({
                   Interest Level
                 </label>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {TAG_OPTIONS.map((tag) => (
+                  {tagOptions.map((tag) => (
                     <button
                       key={tag}
                       type="button"

@@ -116,6 +116,9 @@ export const leadService = {
   addRemark: async (id: string, text: string, token: string): Promise<any> => {
     return apiRequest(`/leads/${id}/remarks`, "POST", { text }, token);
   },
+
+  getFunnelStats: (token: string): any =>
+    apiRequest("/leads/funnel-stats", "GET", undefined, token),
 };
 
 // Company service

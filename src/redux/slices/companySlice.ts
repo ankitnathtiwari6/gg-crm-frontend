@@ -20,6 +20,7 @@ export interface Company {
   name: string;
   users: CompanyUser[];
   whatsappNumbers: WhatsappNumber[];
+  tags: string[];
   settings: { aiEnabled: boolean; language: string };
 }
 
@@ -139,6 +140,19 @@ export const toggleWhatsapp = createAsyncThunk<Company, { id: string; phoneNumbe
   }
 );
 
+export const updateCompanyTags = createAsyncThunk<Company, { id: string; tags: string[] }, { state: RootState; rejectValue: string }>(
+  "company/updateTags",
+  async ({ id, tags }, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token!;
+      const data = await api.company.updateCompany(id, { tags }, token);
+      return data.company;
+    } catch (e) {
+      return rejectWithValue(e instanceof Error ? e.message : "Failed to update tags");
+    }
+  }
+);
+
 const companySlice = createSlice({
   name: "company",
   initialState,
@@ -150,7 +164,7 @@ const companySlice = createSlice({
     const setCompany = (state: CompanyState, action: any) => { state.loading = false; state.company = action.payload; };
     const setError = (state: CompanyState, action: any) => { state.loading = false; state.error = action.payload; };
 
-    [fetchCompany, createCompany, updateCompany, addUser, removeUser, addWhatsapp, removeWhatsapp, toggleWhatsapp].forEach((thunk) => {
+    [fetchCompany, createCompany, updateCompany, updateCompanyTags, addUser, removeUser, addWhatsapp, removeWhatsapp, toggleWhatsapp].forEach((thunk) => {
       builder
         .addCase(thunk.pending, setLoading)
         .addCase(thunk.fulfilled, setCompany)
@@ -160,4 +174,5 @@ const companySlice = createSlice({
 });
 
 export const { clearError } = companySlice.actions;
+export const selectCompanyTags = (state: { company: CompanyState }) => state.company.company?.tags ?? [];
 export default companySlice.reducer;

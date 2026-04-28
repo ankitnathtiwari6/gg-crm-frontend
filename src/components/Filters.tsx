@@ -1,5 +1,5 @@
 import React from "react";
-import { TAG_OPTIONS } from "./CompactEditModal";
+import { useTagOptions } from "../hooks/useTagOptions";
 
 interface FilterValues {
   neetStatus: string;
@@ -32,6 +32,8 @@ const users = [
 ];
 
 export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
+  const tagOptions = useTagOptions();
+
   const updateFilter = <K extends keyof FilterValues>(key: K, value: FilterValues[K]) => {
     setFilters({ [key]: value });
   };
@@ -233,7 +235,7 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
           )}
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {TAG_OPTIONS.map((tag) => (
+          {tagOptions.map((tag) => (
             <button
               key={tag}
               type="button"

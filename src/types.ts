@@ -36,7 +36,8 @@ export interface AuthUser {
   username: string;
   email: string;
   token: string;
-  // Add additional user properties as needed
+  companyId?: string | null;
+  role?: "admin" | "member";
 }
 
 export interface AuthState {
@@ -79,6 +80,7 @@ export interface Lead {
   location?: string;
   countryInterest?: string;
   stage?: string;
+  stageUpdatedBy?: "ai" | "user";
   neetStatus?: string;
   qualification?: string;
   neetYear?: number | null;

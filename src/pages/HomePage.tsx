@@ -19,6 +19,7 @@ import {
   selectTodayLeadsCount,
   selectSort,
 } from "../redux/slices/leadsSlice";
+import FunnelBar from "../components/FunnelBar";
 import { AppDispatch } from "../redux/store";
 
 const HomePage: React.FC = () => {
@@ -152,6 +153,9 @@ const HomePage: React.FC = () => {
         <div className="px-4 py-2 bg-white border-b border-gray-50">
           <LeadStats totalLeads={totalLeads} todayLeads={todayLeadsCount} />
         </div>
+
+        {/* Funnel bar */}
+        <FunnelBar />
 
         {/* Error */}
         {error && (
