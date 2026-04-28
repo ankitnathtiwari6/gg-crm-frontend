@@ -1,7 +1,7 @@
 // src/store/index.ts
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
-import leadReducer from "./slices/leadsSlice";
+import leadReducer, { saveLeadsPrefs } from "./slices/leadsSlice";
 import companyReducer from "./slices/companySlice";
 
 export const store = configureStore({
@@ -10,6 +10,10 @@ export const store = configureStore({
     leads: leadReducer,
     company: companyReducer,
   },
+});
+
+store.subscribe(() => {
+  saveLeadsPrefs(store.getState().leads);
 });
 
 // Infer types from the store itself for use with TypeScript

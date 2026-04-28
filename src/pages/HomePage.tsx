@@ -6,6 +6,7 @@ import { Filters } from "../components/Filters";
 import { SearchBar } from "../components/Search";
 import {
   fetchLeads,
+  fetchFunnelStats,
   setPage,
   setSearchQuery,
   setFilters,
@@ -21,6 +22,41 @@ import {
 } from "../redux/slices/leadsSlice";
 import FunnelBar from "../components/FunnelBar";
 import { AppDispatch } from "../redux/store";
+
+const THIS_YEAR_START = `${new Date().getFullYear()}-01-01`;
+
+const ThisYearTab: React.FC<{
+  filters: ReturnType<typeof selectFilters>;
+  onFilterChange: (f: Parameters<typeof setFilters>[0]) => void;
+}> = ({ filters, onFilterChange }) => {
+  const isThisYear =
+    filters.dateRange.start === THIS_YEAR_START && filters.dateRange.end === "";
+
+  return (
+    <div className="flex gap-1.5">
+      <button
+        onClick={() => onFilterChange({ dateRange: { start: THIS_YEAR_START, end: "" } })}
+        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+          isThisYear
+            ? "bg-indigo-500 text-white"
+            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+        }`}
+      >
+        This Year
+      </button>
+      <button
+        onClick={() => onFilterChange({ dateRange: { start: "", end: "" } })}
+        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+          !isThisYear
+            ? "bg-indigo-500 text-white"
+            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+        }`}
+      >
+        All Time
+      </button>
+    </div>
+  );
+};
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -42,6 +78,7 @@ const HomePage: React.FC = () => {
   // dispatch fetchLeads directly so they control append vs. replace themselves.
   useEffect(() => {
     dispatch(fetchLeads(false));
+    dispatch(fetchFunnelStats());
   }, [dispatch, filters, searchQuery, sortBy, sortOrder]);
 
   const handleSearchChange = (query: string) => {
@@ -105,7 +142,7 @@ const HomePage: React.FC = () => {
     filters.assignedTo,
     filters.dateRange.start,
     filters.dateRange.end,
-    filters.activeDateRange.start,
+    filters.activeDateRange.start !== `${new Date().getFullYear()}-01-01` ? filters.activeDateRange.start : "",
     filters.activeDateRange.end,
     filters.isQualified,
   ].filter(Boolean).length + filters.tags.length;
@@ -150,8 +187,9 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Stats bar */}
-        <div className="px-4 py-2 bg-white border-b border-gray-50">
+        <div className="px-4 py-2 bg-white border-b border-gray-50 space-y-2">
           <LeadStats totalLeads={totalLeads} todayLeads={todayLeadsCount} />
+          <ThisYearTab filters={filters} onFilterChange={handleFilterChange} />
         </div>
 
         {/* Funnel bar */}

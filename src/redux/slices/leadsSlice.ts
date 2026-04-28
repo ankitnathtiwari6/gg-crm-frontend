@@ -64,6 +64,35 @@ interface LeadsState {
   funnelStatsLoading: boolean;
 }
 
+const defaultFilters: LeadsFilters = {
+  neetStatus: "",
+  neetScoreRange: [0, 720],
+  country: "",
+  location: "",
+  isQualified: false,
+  tags: [],
+  assignedTo: "",
+  dateRange: { start: "", end: "" },
+  activeDateRange: { start: `${new Date().getFullYear()}-01-01`, end: "" },
+  stage: "",
+  aiEngaged: false,
+  minQualityScore: 0,
+};
+
+const LEADS_PREFS_KEY = "crm_leads_prefs";
+
+function getPersistedState() {
+  try {
+    const raw = localStorage.getItem(LEADS_PREFS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as { filters?: LeadsFilters; sortBy?: SortField; sortOrder?: SortOrder };
+  } catch {
+    return null;
+  }
+}
+
+const _persisted = getPersistedState();
+
 const initialState: LeadsState = {
   leads: [],
   totalLeads: 0,
@@ -72,28 +101,9 @@ const initialState: LeadsState = {
   currentPage: 1,
   itemsPerPage: 20,
   searchQuery: "",
-  filters: {
-    neetStatus: "",
-    neetScoreRange: [0, 720],
-    country: "",
-    location: "",
-    isQualified: false,
-    tags: [],
-    assignedTo: "",
-    dateRange: {
-      start: "",
-      end: "",
-    },
-    activeDateRange: {
-      start: "",
-      end: "",
-    },
-    stage: "",
-    aiEngaged: false,
-    minQualityScore: 0,
-  },
-  sortBy: "lastInteraction" as SortField,
-  sortOrder: "desc" as SortOrder,
+  filters: _persisted?.filters ? { ...defaultFilters, ..._persisted.filters } : defaultFilters,
+  sortBy: (_persisted?.sortBy ?? "lastInteraction") as SortField,
+  sortOrder: (_persisted?.sortOrder ?? "desc") as SortOrder,
   isLoading: false,
   isLoadingMore: false,
   hasMore: true,
@@ -169,7 +179,22 @@ export const fetchFunnelStats = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const token = state?.auth?.token ?? "";
-      const response = await api.lead.getFunnelStats(token);
+      const { filters } = state.leads;
+
+      const params: Record<string, any> = {};
+      if (filters.dateRange.start) params.startDate = filters.dateRange.start;
+      if (filters.dateRange.end) params.endDate = filters.dateRange.end;
+      if (filters.activeDateRange.start) params.activeStartDate = filters.activeDateRange.start;
+      if (filters.activeDateRange.end) params.activeEndDate = filters.activeDateRange.end;
+      if (filters.assignedTo) {
+        if (filters.assignedTo === "unassigned") params.unassigned = true;
+        else params.assignedTo = filters.assignedTo;
+      }
+      if (filters.tags && filters.tags.length > 0) params.tags = filters.tags;
+      if (filters.country) params.country = filters.country;
+      if (filters.location) params.location = filters.location;
+
+      const response = await api.lead.getFunnelStats(token, params);
       if (response.success) return response.stats as import("./leadsSlice").FunnelStats;
       return rejectWithValue("Failed to fetch funnel stats");
     } catch {
@@ -406,7 +431,17 @@ export const selectPagination = (state: RootState) => ({
 });
 export const selectTodayLeadsCount = (state: RootState) => state.leads.todayLeadsCount;
 export const selectSort = (state: RootState) => ({ sortBy: state.leads.sortBy, sortOrder: state.leads.sortOrder });
+export const selectSearchQuery = (state: RootState) => state.leads.searchQuery;
 export const selectFunnelStats = (state: RootState) => state.leads.funnelStats;
+
+export function saveLeadsPrefs(state: LeadsState): void {
+  try {
+    localStorage.setItem(
+      LEADS_PREFS_KEY,
+      JSON.stringify({ filters: state.filters, sortBy: state.sortBy, sortOrder: state.sortOrder })
+    );
+  } catch {}
+}
 export const selectFunnelStatsLoading = (state: RootState) => state.leads.funnelStatsLoading;
 export const selectStageFilter = (state: RootState) => state.leads.filters.stage;
 
