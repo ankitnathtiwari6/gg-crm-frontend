@@ -16,6 +16,7 @@ import {
 const FILL: Record<string, { base: string; active: string }> = {
   total:                  { base: "#f3f4f6", active: "#374151" },
   aiEngaged:              { base: "#ede9fe", active: "#7c3aed" },
+  warm:                   { base: "#fef3c7", active: "#d97706" },
   hot:                    { base: "#dcfce7", active: "#16a34a" },
   not_responding:         { base: "#fef9c3", active: "#eab308" },
   call_started:           { base: "#dbeafe", active: "#2563eb" },
@@ -67,11 +68,13 @@ const FunnelBar: React.FC = () => {
 
   const activeStage = stageFilter;
   const activeAiEngaged = filters.aiEngaged;
+  const activeWarm = filters.minQualityScore >= 40 && filters.minQualityScore < 70;
   const activeHot = filters.minQualityScore >= 70;
 
   const stages = [
     { key: "total",                 label: "All Leads",      count: stats.total,         onClick: clearFunnelFilter },
     { key: "aiEngaged",             label: "AI Engaged",     count: stats.aiEngaged,     onClick: () => { dispatch(setAiEngagedFilter(true)); dispatch(fetchLeads(false)); } },
+    { key: "warm",                  label: "Warm (>40)",     count: stats.warm,          onClick: () => { dispatch(setHotFilter(40)); dispatch(fetchLeads(false)); } },
     { key: "hot",                   label: "Hot (≥70)",      count: stats.hot,           onClick: () => { dispatch(setHotFilter(70)); dispatch(fetchLeads(false)); } },
     { key: "not_responding",        label: "Not Responding", count: stats.notResponding, onClick: () => applyStage("not_responding") },
     { key: "call_started",          label: "Call Started",   count: stats.callStarted,   onClick: () => applyStage("call_started") },
@@ -84,8 +87,9 @@ const FunnelBar: React.FC = () => {
   ];
 
   const isActive = (key: string) => {
-    if (key === "total") return !activeStage && !activeAiEngaged && !activeHot;
+    if (key === "total") return !activeStage && !activeAiEngaged && !activeWarm && !activeHot;
     if (key === "aiEngaged") return activeAiEngaged;
+    if (key === "warm") return activeWarm;
     if (key === "hot") return activeHot;
     return activeStage === key;
   };
