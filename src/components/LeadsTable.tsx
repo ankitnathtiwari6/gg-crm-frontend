@@ -238,7 +238,7 @@ const LeadsTable: React.FC = () => {
             <tr className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Lead</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned To</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">AI Score</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
@@ -282,10 +282,19 @@ const LeadsTable: React.FC = () => {
                   {lead.email && <div className="text-xs text-gray-400 mt-0.5">{lead.email}</div>}
                 </td>
 
-                {/* Country */}
+                {/* Location */}
                 <td className="px-5 py-3.5">
-                  <div className="text-sm text-gray-700">{lead?.preferredCountry || "—"}</div>
-                  {lead.location && <div className="text-xs text-gray-400">{lead.location}</div>}
+                  {(lead.city || lead.state) ? (
+                    <div className="text-sm text-gray-700">
+                      <span className="font-semibold">{lead.city}</span>
+                      {lead.city && lead.state && <span className="text-gray-400">, </span>}
+                      {lead.state && <span className="text-gray-500">{lead.state}</span>}
+                    </div>
+                  ) : lead.location ? (
+                    <div className="text-sm font-semibold text-gray-700">{lead.location}</div>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
                 </td>
 
                 {/* Assigned To */}
@@ -438,8 +447,16 @@ const LeadsTable: React.FC = () => {
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">Country</div>
-                <div className="text-gray-700">{lead?.preferredCountry || "—"}</div>
+                <div className="text-xs text-gray-400">Location</div>
+                {(lead.city || lead.state) ? (
+                  <div className="text-sm text-gray-700">
+                    <span className="font-semibold">{lead.city}</span>
+                    {lead.city && lead.state && <span className="text-gray-400">, </span>}
+                    {lead.state && <span className="text-gray-500">{lead.state}</span>}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400">{lead.location || "—"}</div>
+                )}
               </div>
             </div>
 

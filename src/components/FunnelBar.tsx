@@ -13,17 +13,23 @@ import {
   fetchLeads,
 } from "../redux/slices/leadsSlice";
 
-interface PillDef {
-  key: string;
-  label: string;
-  count: number;
-  color: string;
-  activeColor: string;
-  onClick: () => void;
-}
+const FILL: Record<string, { base: string; active: string }> = {
+  total:                  { base: "#f3f4f6", active: "#374151" },
+  aiEngaged:              { base: "#ede9fe", active: "#7c3aed" },
+  hot:                    { base: "#dcfce7", active: "#16a34a" },
+  not_responding:         { base: "#fef9c3", active: "#eab308" },
+  call_started:           { base: "#dbeafe", active: "#2563eb" },
+  follow_up:              { base: "#f3e8ff", active: "#9333ea" },
+  documents_requested:    { base: "#e0e7ff", active: "#4f46e5" },
+  documents_received:     { base: "#ccfbf1", active: "#0d9488" },
+  application_submitted:  { base: "#cffafe", active: "#0891b2" },
+  closed_won:             { base: "#d1fae5", active: "#059669" },
+  closed_lost:            { base: "#fee2e2", active: "#dc2626" },
+};
 
-const pct = (num: number, den: number) =>
-  den === 0 ? "—" : `${Math.round((num / den) * 100)}%`;
+const VIEW_H = 100;
+const BAR_MAX = 82;
+const BAR_MIN = 14;
 
 const FunnelBar: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -59,111 +65,23 @@ const FunnelBar: React.FC = () => {
     dispatch(fetchLeads(false));
   };
 
-  const applyAiEngaged = () => {
-    dispatch(setAiEngagedFilter(true));
-    dispatch(fetchLeads(false));
-  };
-
-  const applyHot = () => {
-    dispatch(setHotFilter(70));
-    dispatch(fetchLeads(false));
-  };
-
   const activeStage = stageFilter;
   const activeAiEngaged = filters.aiEngaged;
-
-  const pills: PillDef[] = [
-    {
-      key: "total",
-      label: "All Leads",
-      count: stats.total,
-      color: "bg-gray-100 text-gray-600 hover:bg-gray-200",
-      activeColor: "bg-gray-700 text-white",
-      onClick: clearFunnelFilter,
-    },
-    {
-      key: "aiEngaged",
-      label: "AI Engaged",
-      count: stats.aiEngaged,
-      color: "bg-violet-100 text-violet-700 hover:bg-violet-200",
-      activeColor: "bg-violet-600 text-white",
-      onClick: applyAiEngaged,
-    },
-    {
-      key: "hot",
-      label: "Hot (≥70)",
-      count: stats.hot,
-      color: "bg-green-100 text-green-700 hover:bg-green-200",
-      activeColor: "bg-green-600 text-white",
-      onClick: applyHot,
-    },
-    {
-      key: "not_responding",
-      label: "Not Responding",
-      count: stats.notResponding,
-      color: "bg-yellow-100 text-yellow-700 hover:bg-yellow-200",
-      activeColor: "bg-yellow-500 text-white",
-      onClick: () => applyStage("not_responding"),
-    },
-    {
-      key: "call_started",
-      label: "Call Started",
-      count: stats.callStarted,
-      color: "bg-blue-100 text-blue-700 hover:bg-blue-200",
-      activeColor: "bg-blue-600 text-white",
-      onClick: () => applyStage("call_started"),
-    },
-    {
-      key: "follow_up",
-      label: "Follow Up",
-      count: stats.followUp,
-      color: "bg-purple-100 text-purple-700 hover:bg-purple-200",
-      activeColor: "bg-purple-600 text-white",
-      onClick: () => applyStage("follow_up"),
-    },
-    {
-      key: "documents_requested",
-      label: "Docs Requested",
-      count: stats.docsRequested,
-      color: "bg-indigo-100 text-indigo-700 hover:bg-indigo-200",
-      activeColor: "bg-indigo-600 text-white",
-      onClick: () => applyStage("documents_requested"),
-    },
-    {
-      key: "documents_received",
-      label: "Docs Received",
-      count: stats.docsReceived,
-      color: "bg-teal-100 text-teal-700 hover:bg-teal-200",
-      activeColor: "bg-teal-600 text-white",
-      onClick: () => applyStage("documents_received"),
-    },
-    {
-      key: "application_submitted",
-      label: "Applied",
-      count: stats.applied,
-      color: "bg-cyan-100 text-cyan-700 hover:bg-cyan-200",
-      activeColor: "bg-cyan-600 text-white",
-      onClick: () => applyStage("application_submitted"),
-    },
-    {
-      key: "closed_won",
-      label: "Won",
-      count: stats.won,
-      color: "bg-emerald-100 text-emerald-700 hover:bg-emerald-200",
-      activeColor: "bg-emerald-600 text-white",
-      onClick: () => applyStage("closed_won"),
-    },
-    {
-      key: "closed_lost",
-      label: "Lost",
-      count: stats.lost,
-      color: "bg-red-100 text-red-700 hover:bg-red-200",
-      activeColor: "bg-red-600 text-white",
-      onClick: () => applyStage("closed_lost"),
-    },
-  ];
-
   const activeHot = filters.minQualityScore >= 70;
+
+  const stages = [
+    { key: "total",                 label: "All Leads",      count: stats.total,         onClick: clearFunnelFilter },
+    { key: "aiEngaged",             label: "AI Engaged",     count: stats.aiEngaged,     onClick: () => { dispatch(setAiEngagedFilter(true)); dispatch(fetchLeads(false)); } },
+    { key: "hot",                   label: "Hot (≥70)",      count: stats.hot,           onClick: () => { dispatch(setHotFilter(70)); dispatch(fetchLeads(false)); } },
+    { key: "not_responding",        label: "Not Responding", count: stats.notResponding, onClick: () => applyStage("not_responding") },
+    { key: "call_started",          label: "Call Started",   count: stats.callStarted,   onClick: () => applyStage("call_started") },
+    { key: "follow_up",             label: "Follow Up",      count: stats.followUp,      onClick: () => applyStage("follow_up") },
+    { key: "documents_requested",   label: "Docs Requested", count: stats.docsRequested, onClick: () => applyStage("documents_requested") },
+    { key: "documents_received",    label: "Docs Received",  count: stats.docsReceived,  onClick: () => applyStage("documents_received") },
+    { key: "application_submitted", label: "Applied",        count: stats.applied,       onClick: () => applyStage("application_submitted") },
+    { key: "closed_won",            label: "Won",            count: stats.won,           onClick: () => applyStage("closed_won") },
+    { key: "closed_lost",           label: "Lost",           count: stats.lost,          onClick: () => applyStage("closed_lost") },
+  ];
 
   const isActive = (key: string) => {
     if (key === "total") return !activeStage && !activeAiEngaged && !activeHot;
@@ -172,48 +90,112 @@ const FunnelBar: React.FC = () => {
     return activeStage === key;
   };
 
+  const maxCount = Math.max(...stages.map((s) => s.count), 1);
+  const logMax = Math.log1p(maxCount);
+
+  const getH = (stage: (typeof stages)[0]) =>
+    stage.count === 0
+      ? BAR_MIN
+      : Math.round(BAR_MIN + (Math.log1p(stage.count) / logMax) * (BAR_MAX - BAR_MIN));
+
+  const N = stages.length;
+  const VIEW_W = N * 100;
+
   return (
-    <div className="px-4 py-2 bg-white border-b border-gray-100">
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
-        {pills.map((pill, i) => {
-          const active = isActive(pill.key);
-          const prevCount = i === 0 ? stats.total : pills[i - 1].count;
-          const convPct = i === 0 ? null : pct(pill.count, prevCount);
+    <div className="relative bg-white border-b border-gray-100">
+      {/* Refresh */}
+      <button
+        onClick={() => dispatch(fetchFunnelStats())}
+        className="absolute top-1 right-2 z-10 p-1 text-gray-400 hover:text-gray-600 bg-white/80 hover:bg-white rounded"
+        title="Refresh funnel stats"
+      >
+        <svg
+          className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+      </button>
+
+      {/* Funnel chart */}
+      <svg
+        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+        width="100%"
+        height="88"
+        preserveAspectRatio="none"
+        className="block"
+      >
+        {stages.map((stage, i) => {
+          const active = isActive(stage.key);
+          const h = getH(stage);
+          const hNext = i < N - 1 ? getH(stages[i + 1]) : h;
+          const x0 = i * 100;
+          const x1 = x0 + 100;
+          const xMid = x0 + 50;
+          const yTop = VIEW_H - h;
+          const yNext = VIEW_H - hNext;
+          // cubic bezier: flat on left, smoothly curves down to next section's height on right
+          const d = `M ${x0} ${yTop} C ${xMid} ${yTop} ${xMid} ${yNext} ${x1} ${yNext} L ${x1} ${VIEW_H} L ${x0} ${VIEW_H} Z`;
+          const fill = active ? FILL[stage.key].active : FILL[stage.key].base;
 
           return (
-            <div key={pill.key} className="flex items-center gap-1 flex-shrink-0">
-              {i > 0 && (
-                <div className="flex flex-col items-center">
-                  <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                  {convPct && (
-                    <span className="text-[9px] text-gray-400 leading-none">{convPct}</span>
-                  )}
-                </div>
-              )}
-              <button
-                onClick={pill.onClick}
-                className={`flex flex-col items-center px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  active ? pill.activeColor : pill.color
-                }`}
-              >
-                <span className="font-bold text-sm leading-tight">{pill.count}</span>
-                <span className="leading-tight whitespace-nowrap">{pill.label}</span>
-              </button>
-            </div>
+            <path
+              key={stage.key}
+              d={d}
+              fill={fill}
+              onClick={stage.onClick}
+              style={{ transition: "fill 0.25s ease", cursor: "pointer" }}
+            />
           );
         })}
 
-        <button
-          onClick={() => dispatch(fetchFunnelStats())}
-          className="ml-auto flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
-          title="Refresh funnel stats"
-        >
-          <svg className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
+        {/* Thin separator lines */}
+        {stages.slice(0, -1).map((_, i) => (
+          <line
+            key={i}
+            x1={(i + 1) * 100}
+            y1={0}
+            x2={(i + 1) * 100}
+            y2={VIEW_H}
+            stroke="#e5e7eb"
+            strokeWidth="0.8"
+          />
+        ))}
+      </svg>
+
+      {/* Labels */}
+      <div className="flex border-t border-gray-100">
+        {stages.map((stage) => {
+          const active = isActive(stage.key);
+          return (
+            <button
+              key={stage.key}
+              onClick={stage.onClick}
+              style={{ width: `${100 / N}%` }}
+              className={`flex flex-col items-center py-1.5 border-r border-gray-100 last:border-r-0 transition-colors duration-150 ${
+                active ? "bg-gray-50" : "hover:bg-gray-50"
+              }`}
+            >
+              <span
+                className={`font-bold text-sm leading-tight ${
+                  active ? "text-gray-900" : "text-gray-700"
+                }`}
+              >
+                {stage.count}
+              </span>
+              <span className="text-[9px] text-gray-500 leading-tight whitespace-nowrap">
+                {stage.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
