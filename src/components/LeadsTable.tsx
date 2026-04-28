@@ -35,6 +35,35 @@ const getScoreLabel = (score: number | null | undefined): string => {
 };
 
 
+const TAG_COLORS: Record<string, string> = {
+  "Qualified":               "bg-teal-100 text-teal-700",
+  "Interested":              "bg-green-100 text-green-700",
+  "Most Interested":         "bg-emerald-100 text-emerald-700",
+  "Least Interested":        "bg-lime-100 text-lime-700",
+  "Not Interested":          "bg-red-100 text-red-700",
+  "Not Picking Call":        "bg-orange-100 text-orange-700",
+  "Number Busy":             "bg-amber-100 text-amber-700",
+  "Invalid Phone Number":    "bg-rose-100 text-rose-700",
+  "Invalid Whatsapp Number": "bg-rose-100 text-rose-700",
+  "Will Tell Later":         "bg-sky-100 text-sky-700",
+  "Next Year":               "bg-purple-100 text-purple-700",
+  "India Enquiry":           "bg-indigo-100 text-indigo-700",
+  "Junk":                    "bg-gray-100 text-gray-500",
+};
+
+const FALLBACK_TAG_COLORS = [
+  "bg-pink-100 text-pink-700",
+  "bg-cyan-100 text-cyan-700",
+  "bg-violet-100 text-violet-700",
+  "bg-fuchsia-100 text-fuchsia-700",
+];
+
+const getTagColor = (tag: string): string => {
+  if (TAG_COLORS[tag]) return TAG_COLORS[tag];
+  const hash = tag.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return FALLBACK_TAG_COLORS[hash % FALLBACK_TAG_COLORS.length];
+};
+
 const getStageLabel = (stage?: string): string => {
   switch (stage) {
     case "not_responding": return "Not Responding";
@@ -212,7 +241,7 @@ const LeadsTable: React.FC = () => {
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned To</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">AI Score</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stage</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tags</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created At</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Active At</th>
               <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit</th>
@@ -304,12 +333,16 @@ const LeadsTable: React.FC = () => {
                   )}
                 </td>
 
-                {/* Stage */}
+                {/* Tags */}
                 <td className="px-5 py-3.5">
-                  {lead.stage ? (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>
-                      {getStageLabel(lead.stage)}
-                    </span>
+                  {lead.tags && lead.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {lead.tags.map((tag) => (
+                        <span key={tag} className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTagColor(tag)}`}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   ) : (
                     <span className="text-xs text-gray-300">—</span>
                   )}
