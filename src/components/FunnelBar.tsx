@@ -178,6 +178,11 @@ const FunnelBar: React.FC = () => {
       <div className="flex border-t border-gray-100">
         {stages.map((stage) => {
           const active = isActive(stage.key);
+          const pct = stats.total > 0
+            ? stage.key === "total"
+              ? 100
+              : Math.round((stage.count / stats.total) * 100)
+            : 0;
           return (
             <button
               key={stage.key}
@@ -193,6 +198,9 @@ const FunnelBar: React.FC = () => {
                 }`}
               >
                 {stage.count}
+              </span>
+              <span className={`text-[9px] font-semibold leading-tight ${active ? "text-indigo-600" : "text-gray-400"}`}>
+                {pct}%
               </span>
               <span className="text-[9px] text-gray-500 leading-tight whitespace-nowrap">
                 {stage.label}
