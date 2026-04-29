@@ -148,6 +148,37 @@ export const companyService = {
     apiRequest(`${endpoints.companies.base}/${id}/whatsapp/${phoneNumberId}/toggle`, "PATCH", undefined, token),
 };
 
+// Training service
+export const trainingService = {
+  getChatWithSuggestions: (leadId: string, token: string): Promise<any> =>
+    apiRequest(`/training/leads/${leadId}/chat`, "GET", undefined, token),
+
+  saveSuggestion: (
+    leadId: string,
+    data: {
+      messageId: string;
+      suggestedReply: string;
+      conversationContext: any[];
+      originalAiReply: string;
+    },
+    token: string
+  ): Promise<any> =>
+    apiRequest(`/training/leads/${leadId}/suggestions`, "POST", data, token),
+
+  deleteSuggestion: (suggestionId: string, token: string): Promise<void> =>
+    apiRequest(`/training/suggestions/${suggestionId}`, "DELETE", undefined, token),
+
+  embedSuggestions: (leadId: string, token: string): Promise<any> =>
+    apiRequest(`/training/embed/${leadId}`, "POST", undefined, token),
+
+  generateReply: (
+    leadId: string,
+    data: { conversationContext: any[]; originalAiReply: string; userInstruction: string },
+    token: string
+  ): Promise<{ generatedReply: string }> =>
+    apiRequest(`/training/leads/${leadId}/generate-reply`, "POST", data, token),
+};
+
 // Export a default API object that contains all services
 const api = {
   auth: authService,

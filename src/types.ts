@@ -65,6 +65,7 @@ export interface Lead {
   messageCount: number;
   status: "active" | "inactive" | "archived";
   tags?: string[];
+  aiTags?: string[];
   source?: string;
   notes?: string;
   chatHistory?: Message[];
@@ -114,3 +115,27 @@ export type WhatsAppNumber = {
 };
 
 export type MessageRecord = Record<string, Message[]>;
+
+export interface TrainingSuggestion {
+  _id: string;
+  leadId: string;
+  messageId: string;
+  originalAiReply: string;
+  suggestedReply: string;
+  conversationContext: Message[];
+  isEmbedded: boolean;
+  pineconeId?: string;
+  createdAt: string;
+}
+
+export interface ChatWithSuggestions {
+  lead: { _id: string; name?: string; leadPhoneNumber: string };
+  messages: Message[];
+  suggestions: Record<string, TrainingSuggestion>;
+  stats: {
+    totalMessages: number;
+    aiMessages: number;
+    suggestions: number;
+    embedded: number;
+  };
+}

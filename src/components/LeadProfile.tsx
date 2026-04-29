@@ -360,9 +360,9 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
               </div>
             </div>
 
-            {/* Interest tags */}
+            {/* Manual tags */}
             <div>
-              <label className={labelCls}>Interest / Tags</label>
+              <label className={labelCls}>Manual Tags</label>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {tagOptions.map((tag) => (
                   <button
@@ -379,6 +379,28 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* AI tags — read-only */}
+            <div>
+              <label className={labelCls}>
+                AI Tags <span className="text-purple-500 font-normal">(auto-generated)</span>
+              </label>
+              {form.aiTags && form.aiTags.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {form.aiTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2.5 py-1 text-xs rounded-full font-medium border border-dashed border-purple-300 bg-purple-50 text-purple-700"
+                      title="Set automatically by AI"
+                    >
+                      ✦ {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 mt-1">No AI tags yet</p>
+              )}
             </div>
 
             {/* Notes */}

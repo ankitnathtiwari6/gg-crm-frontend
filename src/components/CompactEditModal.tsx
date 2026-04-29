@@ -249,10 +249,10 @@ const CompactEditModal: React.FC<EditModalProps> = ({
                 </div>
               </div>
 
-              {/* Interest Tags */}
+              {/* Manual Tags */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Interest Level
+                  Manual Tags
                 </label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {tagOptions.map((tag) => (
@@ -270,6 +270,28 @@ const CompactEditModal: React.FC<EditModalProps> = ({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* AI Tags — read-only */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  AI Tags <span className="text-purple-500 font-normal">(auto-generated)</span>
+                </label>
+                {editedLead.aiTags && editedLead.aiTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {editedLead.aiTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1.5 text-sm rounded-full border border-dashed border-purple-300 bg-purple-50 text-purple-700"
+                        title="Set automatically by AI"
+                      >
+                        ✦ {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 mt-1">No AI tags yet</p>
+                )}
               </div>
             </div>
           )}
