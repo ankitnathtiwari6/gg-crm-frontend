@@ -119,6 +119,9 @@ export const leadService = {
 
   getFunnelStats: (token: string, params?: Record<string, any>): any =>
     apiRequest(buildUrl("/leads/funnel-stats", params), "GET", undefined, token),
+
+  getDashboardStats: (token: string): any =>
+    apiRequest("/leads/dashboard-stats", "GET", undefined, token),
 };
 
 // Company service
