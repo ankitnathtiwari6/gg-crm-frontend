@@ -108,6 +108,8 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
   const dispatch = useDispatch<AppDispatch>();
   const token = useSelector((state: RootState) => state.auth.token) ?? "";
   const isSavingRedux = useSelector((state: RootState) => state.leads.isLoading);
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const isAdmin = currentUser?.role === "admin";
   const tagOptions = useTagOptions();
 
   // Form state — resets when a different lead is opened
@@ -198,7 +200,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
     }
   };
 
-  const timeline = mergeTimeline(remarks, activityLog);
+  const timeline = mergeTimeline(remarks, isAdmin ? activityLog : []);
   const grouped = groupByDate(timeline);
   const scoreBadge = getScoreBadge(lead.leadQualityScore);
   const stageBadge = getStageBadge(lead.stage);

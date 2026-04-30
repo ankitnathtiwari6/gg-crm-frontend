@@ -12,11 +12,9 @@ import {
   fetchLeads,
 } from "../redux/slices/leadsSlice";
 
-const ADMIN_EMAIL = "ankitnathtiwari@gmail.com";
 import LeadProfile from "./LeadProfile";
 import Chat from "./Chat";
 import TrainingTab from "./TrainingTab";
-import CompactEditModal from "./CompactEditModal";
 import moment from "moment";
 
 const getScoreBadgeColor = (score: number | null | undefined): string => {
@@ -145,7 +143,6 @@ const LeadsTable: React.FC = () => {
     [isLoadingMore, hasMore, dispatch],
   );
 
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [slideOverOpen, setSlideOverOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "chat" | "training">(
     "profile",
@@ -167,12 +164,6 @@ const LeadsTable: React.FC = () => {
     dispatch(setSelectedLead(leadId));
     setSlideOverOpen(true);
     setActiveTab("profile");
-  };
-
-  const handleEditLead = (leadId: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    dispatch(setSelectedLead(leadId));
-    setIsEditModalOpen(true);
   };
 
   const handleCall = (phoneNumber: string, e: React.MouseEvent) => {
@@ -210,7 +201,7 @@ const LeadsTable: React.FC = () => {
     setShowAssignPopup(leadId === showAssignPopup ? null : leadId);
   };
 
-  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+  const isAdmin = currentUser?.role === "admin";
 
   const handleDeleteLead = (leadId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -316,15 +307,22 @@ const LeadsTable: React.FC = () => {
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Tags
               </th>
+              {isAdmin && (
+                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  AI Tags
+                </th>
+              )}
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Created At
               </th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Active At
               </th>
-              <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Edit
-              </th>
+              {isAdmin && (
+                <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Delete
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -468,37 +466,42 @@ const LeadsTable: React.FC = () => {
 
                 {/* Tags */}
                 <td className="px-5 py-3.5">
-                  <div className="space-y-1">
-                    {lead.tags && lead.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {lead.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTagColor(tag)}`}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {lead.aiTags && lead.aiTags.length > 0 && (
+                  {lead.tags && lead.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {lead.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTagColor(tag)}`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
+                </td>
+
+                {/* AI Tags (admin only) */}
+                {isAdmin && (
+                  <td className="px-5 py-3.5">
+                    {lead.aiTags && lead.aiTags.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {lead.aiTags.map((tag) => (
                           <span
                             key={tag}
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium border border-dashed border-purple-300 bg-purple-50 text-purple-700`}
+                            className="px-2 py-0.5 rounded-full text-xs font-medium border border-dashed border-purple-300 bg-purple-50 text-purple-700"
                             title="AI tag"
                           >
                             ✦ {tag}
                           </span>
                         ))}
                       </div>
-                    )}
-                    {(!lead.tags || lead.tags.length === 0) && (!lead.aiTags || lead.aiTags.length === 0) && (
+                    ) : (
                       <span className="text-xs text-gray-300">—</span>
                     )}
-                  </div>
-                </td>
+                  </td>
+                )}
 
                 {/* Created At */}
                 <td className="px-5 py-3.5">
@@ -514,12 +517,13 @@ const LeadsTable: React.FC = () => {
                   </div>
                 </td>
 
-                {/* Edit / Delete */}
-                <td className="px-5 py-3.5 text-center">
-                  <div className="flex items-center justify-center gap-1">
+                {/* Delete (admin only) */}
+                {isAdmin && (
+                  <td className="px-5 py-3.5 text-center">
                     <button
-                      onClick={(e) => handleEditLead(lead.id, e)}
-                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                      onClick={(e) => handleDeleteLead(lead.id, e)}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      title="Delete lead"
                     >
                       <svg
                         className="w-4 h-4"
@@ -531,33 +535,12 @@ const LeadsTable: React.FC = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                         />
                       </svg>
                     </button>
-                    {isAdmin && (
-                      <button
-                        onClick={(e) => handleDeleteLead(lead.id, e)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                        title="Delete lead"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </td>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -592,10 +575,10 @@ const LeadsTable: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
+              {isAdmin && (
                 <button
-                  onClick={(e) => handleEditLead(lead.id, e)}
-                  className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-md"
+                  onClick={(e) => handleDeleteLead(lead.id, e)}
+                  className="p-1.5 text-gray-400 hover:text-red-600 rounded-md"
                 >
                   <svg
                     className="w-4 h-4"
@@ -607,31 +590,11 @@ const LeadsTable: React.FC = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
                 </button>
-                {isAdmin && (
-                  <button
-                    onClick={(e) => handleDeleteLead(lead.id, e)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-md"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
-                )}
-              </div>
+              )}
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
@@ -789,11 +752,6 @@ const LeadsTable: React.FC = () => {
         </>
       )}
 
-      <CompactEditModal
-        leadId={selectedLeadId}
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-      />
     </>
   );
 };
