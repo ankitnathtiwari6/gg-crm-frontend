@@ -125,6 +125,17 @@ export interface TrainingSuggestion {
   conversationContext: Message[];
   isEmbedded: boolean;
   pineconeId?: string;
+  embeddingStatus: "pending_review" | "embedded";
+  situation: string;
+  stage: string;
+  userIntent: string;
+  constraints: string;
+  signals: string;
+  preferredCountries: string[];
+  strategy: string[];
+  antiPatterns: string[];
+  confirmedBy?: string;
+  confirmedAt?: string;
   createdAt: string;
 }
 

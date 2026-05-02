@@ -74,6 +74,12 @@ const CompanySettingsPage: React.FC = () => {
     }
   };
 
+  const handleToggleRAG = () => {
+    if (company) {
+      dispatch(updateCompany({ id: company._id, payload: { settings: { ragEnabled: !company.settings.ragEnabled } } }));
+    }
+  };
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!company || !userEmail.trim()) return;
@@ -209,6 +215,25 @@ const CompanySettingsPage: React.FC = () => {
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                   company?.settings.aiEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between mt-5 pt-5 border-t border-gray-50">
+            <div>
+              <p className="text-sm font-medium text-gray-900">RAG Injection</p>
+              <p className="text-xs text-gray-400 mt-0.5">Use your training examples to guide AI reply style. Disable to fall back to generic tone.</p>
+            </div>
+            <button
+              onClick={handleToggleRAG}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                company?.settings.ragEnabled !== false ? "bg-black" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  company?.settings.ragEnabled !== false ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
