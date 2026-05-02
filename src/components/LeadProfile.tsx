@@ -262,7 +262,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
 
           <div className="p-4 space-y-4">
             {/* Row: Name + Email */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>Name</label>
                 <input className={inputCls} value={form.name ?? ""} onChange={(e) => handleChange("name", e.target.value)} />
@@ -274,7 +274,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
             </div>
 
             {/* Row: NEET Score + Country */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>NEET Score</label>
                 <input className={inputCls} type="number" value={form.neetScore ?? ""} onChange={(e) => handleChange("neetScore", e.target.value ? Number(e.target.value) : null)} />
@@ -286,7 +286,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
             </div>
 
             {/* Row: Stage (admin only) + Status */}
-            <div className={`grid gap-3 ${isAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
+            <div className={`grid gap-3 grid-cols-1 ${isAdmin ? "sm:grid-cols-2" : ""}`}>
               {isAdmin && (
                 <div>
                   <label className={labelCls}>Stage</label>
@@ -306,7 +306,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
             </div>
 
             {/* Row: Qualification + NEET Year */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>Qualification</label>
                 <select className={inputCls} value={form.qualification ?? ""} onChange={(e) => handleChange("qualification", e.target.value || undefined)}>
@@ -320,7 +320,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
             </div>
 
             {/* Row: City + State */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>City</label>
                 <input className={inputCls} value={form.city ?? ""} onChange={(e) => handleChange("city", e.target.value)} />
@@ -332,7 +332,7 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
             </div>
 
             {/* Row: Budget + Target Year */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>Budget</label>
                 <input className={inputCls} placeholder="e.g. 30-40 lakhs" value={form.budget ?? ""} onChange={(e) => handleChange("budget", e.target.value)} />

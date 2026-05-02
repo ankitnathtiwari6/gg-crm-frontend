@@ -675,7 +675,7 @@ const LeadsTable: React.FC = () => {
           />
 
           {/* Panel */}
-          <div className="fixed right-0 top-0 h-full w-1/2 bg-white z-50 shadow-2xl flex flex-col transform transition-transform duration-300">
+          <div className="fixed right-0 top-0 h-full w-full sm:w-3/4 md:w-1/2 bg-white z-50 shadow-2xl flex flex-col transform transition-transform duration-300">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
               <div className="flex gap-1">

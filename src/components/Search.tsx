@@ -58,10 +58,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
         <button
           onClick={() => handleSearch(searchQuery)}
-          className="ml-2 mr-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm transition-colors duration-200 shadow-sm hover:shadow flex items-center justify-center"
+          className="ml-2 mr-2 px-3 sm:px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm transition-colors duration-200 shadow-sm hover:shadow flex items-center justify-center"
         >
-          <Search className="w-4 h-4 mr-2" />
-          Search
+          <Search className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Search</span>
         </button>
       </div>
 

@@ -128,6 +128,10 @@ const FunnelBar: React.FC = () => {
         </svg>
       </button>
 
+      {/* Scrollable wrapper for mobile */}
+      <div className="overflow-x-auto">
+      <div style={{ minWidth: `${N * 56}px` }}>
+
       {/* Funnel chart */}
       <svg
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
@@ -209,6 +213,9 @@ const FunnelBar: React.FC = () => {
           );
         })}
       </div>
+
+      </div>{/* end min-width inner */}
+      </div>{/* end overflow-x-auto */}
     </div>
   );
 };

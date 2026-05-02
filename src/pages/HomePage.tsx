@@ -173,7 +173,7 @@ const HomePage: React.FC = () => {
     <div className="flex h-screen bg-gray-50">
       <div className="flex-1 flex flex-col md:ml-20 min-w-0 transition-all duration-300">
         {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 pl-14 md:pl-4 pr-4 py-3 flex items-center gap-3">
           <div className="flex-1">
             <SearchBar searchQuery={searchQuery} setSearchQuery={handleSearchChange} />
           </div>
@@ -319,7 +319,7 @@ const HomePage: React.FC = () => {
             className="fixed inset-0 bg-black/20 z-30"
             onClick={() => setFilterDrawerOpen(false)}
           />
-          <div className="fixed right-0 top-0 h-full w-80 bg-white z-40 shadow-xl flex flex-col">
+          <div className="fixed right-0 top-0 h-full w-full sm:w-80 bg-white z-40 shadow-xl flex flex-col">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h2 className="text-base font-semibold text-gray-800">Filters</h2>
               <div className="flex items-center gap-2">
