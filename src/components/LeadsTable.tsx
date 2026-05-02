@@ -699,16 +699,18 @@ const LeadsTable: React.FC = () => {
                 >
                   Chat
                 </button>
-                <button
-                  onClick={() => setActiveTab("training")}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === "training"
-                      ? "bg-white text-purple-600 shadow-sm border border-gray-200"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Training
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => setActiveTab("training")}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === "training"
+                        ? "bg-white text-purple-600 shadow-sm border border-gray-200"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Training
+                  </button>
+                )}
               </div>
               <button
                 onClick={() => setSlideOverOpen(false)}
@@ -739,8 +741,10 @@ const LeadsTable: React.FC = () => {
                   </div>
                 ) : activeTab === "chat" ? (
                   <Chat lead={currentLead} />
-                ) : (
+                ) : isAdmin ? (
                   <TrainingTab lead={currentLead} />
+                ) : (
+                  <Chat lead={currentLead} />
                 )
               ) : (
                 <div className="h-full flex items-center justify-center text-gray-400 text-sm">

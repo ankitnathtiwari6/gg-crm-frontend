@@ -285,14 +285,16 @@ const LeadProfile: React.FC<LeadProfileProps> = ({ lead }) => {
               </div>
             </div>
 
-            {/* Row: Stage + Status */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Stage</label>
-                <select className={inputCls} value={form.stage ?? ""} onChange={(e) => handleChange("stage", e.target.value || undefined)}>
-                  {STAGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
+            {/* Row: Stage (admin only) + Status */}
+            <div className={`grid gap-3 ${isAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
+              {isAdmin && (
+                <div>
+                  <label className={labelCls}>Stage</label>
+                  <select className={inputCls} value={form.stage ?? ""} onChange={(e) => handleChange("stage", e.target.value || undefined)}>
+                    {STAGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className={labelCls}>Status</label>
                 <select className={inputCls} value={form.status ?? "active"} onChange={(e) => handleChange("status", e.target.value as any)}>

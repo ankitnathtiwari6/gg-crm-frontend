@@ -23,37 +23,56 @@ import {
 import FunnelBar from "../components/FunnelBar";
 import { AppDispatch } from "../redux/store";
 
-const THIS_YEAR_START = `${new Date().getFullYear()}-01-01`;
+const _now = new Date();
+const _fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const TODAY = _fmt(_now);
+const THIS_YEAR_START = `${_now.getFullYear()}-01-01`;
+const _last7 = new Date(_now); _last7.setDate(_now.getDate() - 7);
+const LAST_7_START = _fmt(_last7);
+const _last30 = new Date(_now); _last30.setDate(_now.getDate() - 30);
+const LAST_30_START = _fmt(_last30);
 
-const ThisYearTab: React.FC<{
+type DateTab = "today" | "7d" | "30d" | "year" | "all";
+
+const getActiveDateTab = (start: string, end: string): DateTab => {
+  if (end !== "") return "all";
+  if (start === TODAY) return "today";
+  if (start === LAST_7_START) return "7d";
+  if (start === LAST_30_START) return "30d";
+  if (start === THIS_YEAR_START) return "year";
+  return "all";
+};
+
+const DateRangeTabs: React.FC<{
   filters: ReturnType<typeof selectFilters>;
   onFilterChange: (f: Parameters<typeof setFilters>[0]) => void;
 }> = ({ filters, onFilterChange }) => {
-  const isThisYear =
-    filters.dateRange.start === THIS_YEAR_START && filters.dateRange.end === "";
+  const active = getActiveDateTab(filters.dateRange.start, filters.dateRange.end);
+
+  const tabs: { key: DateTab; label: string; start: string }[] = [
+    { key: "today", label: "Today",        start: TODAY },
+    { key: "7d",    label: "Last 7 Days",  start: LAST_7_START },
+    { key: "30d",   label: "Last 30 Days", start: LAST_30_START },
+    { key: "year",  label: "This Year",    start: THIS_YEAR_START },
+    { key: "all",   label: "All Time",     start: "" },
+  ];
 
   return (
     <div className="flex gap-1.5">
-      <button
-        onClick={() => onFilterChange({ dateRange: { start: THIS_YEAR_START, end: "" } })}
-        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-          isThisYear
-            ? "bg-indigo-500 text-white"
-            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-        }`}
-      >
-        This Year
-      </button>
-      <button
-        onClick={() => onFilterChange({ dateRange: { start: "", end: "" } })}
-        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-          !isThisYear
-            ? "bg-indigo-500 text-white"
-            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-        }`}
-      >
-        All Time
-      </button>
+      {tabs.map(({ key, label, start }) => (
+        <button
+          key={key}
+          onClick={() => onFilterChange({ dateRange: { start, end: "" } })}
+          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+            active === key
+              ? "bg-indigo-500 text-white"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 };
@@ -189,7 +208,7 @@ const HomePage: React.FC = () => {
         {/* Stats bar */}
         <div className="px-4 py-2 bg-white border-b border-gray-50 space-y-2">
           <LeadStats totalLeads={totalLeads} todayLeads={todayLeadsCount} />
-          <ThisYearTab filters={filters} onFilterChange={handleFilterChange} />
+          <DateRangeTabs filters={filters} onFilterChange={handleFilterChange} />
         </div>
 
         {/* Funnel bar */}
