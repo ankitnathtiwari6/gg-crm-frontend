@@ -285,44 +285,47 @@ const LeadsTable: React.FC = () => {
   return (
     <>
       {/* ── Desktop Table ── */}
-      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
         <table className="min-w-full">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Lead
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 Contact
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Location
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 Assigned To
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 NEET Score
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Budget
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 AI Score
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Tags
               </th>
               {isAdmin && (
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   AI Tags
                 </th>
               )}
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 Created At
               </th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 Active At
               </th>
               {isAdmin && (
-                <th className="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Delete
                 </th>
               )}
@@ -340,13 +343,8 @@ const LeadsTable: React.FC = () => {
                 onClick={() => handleSelectLead(lead.id)}
               >
                 {/* Lead */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0 h-9 w-9 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-sm">
-                      <span className="text-white text-sm font-semibold">
-                        {lead?.name?.charAt(0)?.toUpperCase() || "?"}
-                      </span>
-                    </div>
                     <div>
                       <div className="text-sm font-semibold text-gray-800">
                         {lead?.name || "Unknown"}
@@ -359,7 +357,7 @@ const LeadsTable: React.FC = () => {
                 </td>
 
                 {/* Contact */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3 whitespace-nowrap">
                   <div
                     className="text-sm text-indigo-600 font-medium cursor-pointer hover:underline"
                     onClick={(e) => handleCall(lead.leadPhoneNumber, e)}
@@ -374,7 +372,7 @@ const LeadsTable: React.FC = () => {
                 </td>
 
                 {/* Location */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3">
                   {lead.city || lead.state ? (
                     <div className="text-sm text-gray-700">
                       <span className="font-semibold">{lead.city}</span>
@@ -395,7 +393,7 @@ const LeadsTable: React.FC = () => {
                 </td>
 
                 {/* Assigned To */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3">
                   <div className="relative">
                     {lead?.assignedTo?.id ? (
                       <div
@@ -451,7 +449,7 @@ const LeadsTable: React.FC = () => {
                 </td>
 
                 {/* NEET Score */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3">
                   {lead.neetScore != null ? (
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
                       {lead.neetScore}
@@ -461,8 +459,19 @@ const LeadsTable: React.FC = () => {
                   )}
                 </td>
 
+                {/* Budget */}
+                <td className="px-3 py-3">
+                  {lead.budget ? (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                      {lead.budget}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
+                </td>
+
                 {/* Score */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3">
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getScoreBadgeColor(lead.leadQualityScore)}`}
                   >
@@ -479,7 +488,7 @@ const LeadsTable: React.FC = () => {
                 </td>
 
                 {/* Tags */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3">
                   {lead.tags && lead.tags.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {lead.tags.map((tag) => (
@@ -498,7 +507,7 @@ const LeadsTable: React.FC = () => {
 
                 {/* AI Tags (admin only) */}
                 {isAdmin && (
-                  <td className="px-5 py-3.5">
+                  <td className="px-3 py-3">
                     {lead.aiTags && lead.aiTags.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {lead.aiTags.map((tag) => (
@@ -518,14 +527,14 @@ const LeadsTable: React.FC = () => {
                 )}
 
                 {/* Created At */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3">
                   <div className="text-xs text-gray-500 whitespace-nowrap">
                     {formatCreatedAt(lead.createdAt)}
                   </div>
                 </td>
 
                 {/* Active At */}
-                <td className="px-5 py-3.5">
+                <td className="px-3 py-3">
                   <div className="text-xs text-gray-500 whitespace-nowrap">
                     {formatCreatedAt(lead.lastInteraction)}
                   </div>
@@ -645,6 +654,11 @@ const LeadsTable: React.FC = () => {
               {lead.neetScore != null && (
                 <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
                   NEET {lead.neetScore}
+                </span>
+              )}
+              {lead.budget && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                  {lead.budget}
                 </span>
               )}
               <span
@@ -774,7 +788,6 @@ const LeadsTable: React.FC = () => {
           </div>
         </>
       )}
-
     </>
   );
 };
