@@ -302,6 +302,9 @@ const LeadsTable: React.FC = () => {
                 Assigned To
               </th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                NEET Score
+              </th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 AI Score
               </th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -445,6 +448,17 @@ const LeadsTable: React.FC = () => {
                     {showAssignPopup === lead.id &&
                       AssignDropdown(lead.id, !!lead?.assignedTo?.id)}
                   </div>
+                </td>
+
+                {/* NEET Score */}
+                <td className="px-5 py-3.5">
+                  {lead.neetScore != null ? (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                      {lead.neetScore}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-300">—</span>
+                  )}
                 </td>
 
                 {/* Score */}
@@ -627,13 +641,18 @@ const LeadsTable: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-2 flex items-center justify-between">
+            <div className="mt-2 flex items-center justify-between gap-2">
+              {lead.neetScore != null && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                  NEET {lead.neetScore}
+                </span>
+              )}
               <span
                 className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getScoreBadgeColor(lead.leadQualityScore)}`}
               >
                 {getScoreLabel(lead.leadQualityScore)}
               </span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 ml-auto">
                 {formatCreatedAt(lead.createdAt)}
               </span>
             </div>

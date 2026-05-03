@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useTagOptions } from "../hooks/useTagOptions";
 
 interface FilterValues {
@@ -33,6 +33,13 @@ const users = [
 
 export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
   const tagOptions = useTagOptions();
+  const [scoreMin, setScoreMin] = useState(String(filters.neetScoreRange[0]));
+  const [scoreMax, setScoreMax] = useState(String(filters.neetScoreRange[1]));
+
+  useEffect(() => {
+    setScoreMin(String(filters.neetScoreRange[0]));
+    setScoreMax(String(filters.neetScoreRange[1]));
+  }, [filters.neetScoreRange[0], filters.neetScoreRange[1]]);
 
   const updateFilter = <K extends keyof FilterValues>(key: K, value: FilterValues[K]) => {
     setFilters({ [key]: value });
@@ -54,6 +61,8 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
   };
 
   const countActiveFilters = () => {
+    const scoreRangeActive =
+      filters.neetScoreRange[0] !== 0 || filters.neetScoreRange[1] !== 720;
     return [
       filters.neetStatus,
       filters.country,
@@ -64,6 +73,7 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
       filters.activeDateRange.start,
       filters.activeDateRange.end,
       filters.isQualified,
+      scoreRangeActive,
     ].filter(Boolean).length + filters.tags.length;
   };
 
@@ -79,6 +89,7 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
           onClick={() =>
             setFilters({
               neetStatus: "",
+              neetScoreRange: [0, 720],
               country: "",
               location: "",
               assignedTo: "",
@@ -106,6 +117,46 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
           <option value="withScore">With Score</option>
           <option value="withoutScore">Without Score</option>
         </select>
+      </div>
+
+      {/* NEET Score Range */}
+      <div>
+        <label className={labelClass}>NEET Score Range</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={0}
+            max={720}
+            value={scoreMin}
+            onChange={(e) => setScoreMin(e.target.value)}
+            onBlur={() => {
+              const val = Math.min(Math.max(Number(scoreMin) || 0, 0), filters.neetScoreRange[1]);
+              setScoreMin(String(val));
+              updateFilter("neetScoreRange", [val, filters.neetScoreRange[1]]);
+            }}
+            placeholder="Min"
+            className={inputClass}
+          />
+          <span className="text-gray-400 text-sm flex-shrink-0">to</span>
+          <input
+            type="number"
+            min={0}
+            max={720}
+            value={scoreMax}
+            onChange={(e) => setScoreMax(e.target.value)}
+            onBlur={() => {
+              const val = Math.max(Math.min(Number(scoreMax) || 720, 720), filters.neetScoreRange[0]);
+              setScoreMax(String(val));
+              updateFilter("neetScoreRange", [filters.neetScoreRange[0], val]);
+            }}
+            placeholder="Max"
+            className={inputClass}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-gray-400 mt-1 px-0.5">
+          <span>{scoreMin}</span>
+          <span>{scoreMax}</span>
+        </div>
       </div>
 
       {/* Country */}
