@@ -42,7 +42,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={() => setIsSearchFocused(true)}
           onBlur={() => setIsSearchFocused(false)}
-          placeholder="Search by name, location, or country..."
+          placeholder="Search by name, phone number, or city..."
           className="w-full px-3 py-3 pl-3 text-gray-700 placeholder-gray-400 focus:outline-none rounded-lg"
         />
 
