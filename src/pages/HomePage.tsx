@@ -91,6 +91,17 @@ const HomePage: React.FC = () => {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [jumpInput, setJumpInput] = useState("");
+  const [funnelVisible, setFunnelVisible] = useState(() => {
+    try { return localStorage.getItem("crm_funnel_visible") !== "false"; } catch { return true; }
+  });
+
+  const toggleFunnel = () => {
+    setFunnelVisible((v) => {
+      const next = !v;
+      try { localStorage.setItem("crm_funnel_visible", String(next)); } catch {}
+      return next;
+    });
+  };
 
   // Fetch on filter / search / sort change (fresh replace).
   // currentPage is intentionally excluded — pagination clicks and infinite scroll
@@ -208,11 +219,28 @@ const HomePage: React.FC = () => {
         {/* Stats bar */}
         <div className="px-4 py-2 bg-white border-b border-gray-50 space-y-2">
           <LeadStats totalLeads={totalLeads} todayLeads={todayLeadsCount} />
-          <DateRangeTabs filters={filters} onFilterChange={handleFilterChange} />
+          <div className="flex items-center justify-between gap-2">
+            <DateRangeTabs filters={filters} onFilterChange={handleFilterChange} />
+            <button
+              onClick={toggleFunnel}
+              title={funnelVisible ? "Hide funnel" : "Show funnel"}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 border border-gray-200 transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${funnelVisible ? "" : "-rotate-90"}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              {funnelVisible ? "Hide Funnel" : "Show Funnel"}
+            </button>
+          </div>
         </div>
 
         {/* Funnel bar */}
-        <FunnelBar />
+        {funnelVisible && <FunnelBar />}
 
         {/* Error */}
         {error && (
