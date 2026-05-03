@@ -156,6 +156,7 @@ export const trainingService = {
   getChatWithSuggestions: (leadId: string, token: string): Promise<any> =>
     apiRequest(`/training/leads/${leadId}/chat`, "GET", undefined, token),
 
+  // Save reply + get AI-generated review fields back. Does NOT embed.
   saveSuggestion: (
     leadId: string,
     data: {
@@ -165,8 +166,33 @@ export const trainingService = {
       originalAiReply: string;
     },
     token: string
-  ): Promise<any> =>
+  ): Promise<{ suggestion: any; generated: { situation: string; stage: string; userIntent: string; constraints: string; signals: string; preferredCountries: string[]; strategy: string[]; antiPatterns: string[] } }> =>
     apiRequest(`/training/leads/${leadId}/suggestions`, "POST", data, token),
+
+  // Trainer confirmed review — save final edits and embed to Pinecone.
+  confirmEmbed: (
+    suggestionId: string,
+    data: {
+      situation: string;
+      stage: string;
+      userIntent: string;
+      constraints: string;
+      signals: string;
+      preferredCountries: string[];
+      strategy: string[];
+      antiPatterns: string[];
+    },
+    token: string
+  ): Promise<{ suggestion: any }> =>
+    apiRequest(`/training/suggestions/${suggestionId}/embed`, "POST", data, token),
+
+  // Auto-save edits during review (before confirming).
+  updateSuggestion: (
+    suggestionId: string,
+    data: Partial<{ situation: string; stage: string; userIntent: string; constraints: string; signals: string; preferredCountries: string[]; strategy: string[]; antiPatterns: string[]; suggestedReply: string }>,
+    token: string
+  ): Promise<{ suggestion: any }> =>
+    apiRequest(`/training/suggestions/${suggestionId}`, "PUT", data, token),
 
   deleteSuggestion: (suggestionId: string, token: string): Promise<void> =>
     apiRequest(`/training/suggestions/${suggestionId}`, "DELETE", undefined, token),
@@ -176,7 +202,7 @@ export const trainingService = {
 
   generateReply: (
     leadId: string,
-    data: { conversationContext: any[]; originalAiReply: string; userInstruction: string },
+    data: { conversationContext: any[]; userInstruction: string; previousSuggestions?: string[] },
     token: string
   ): Promise<{ generatedReply: string }> =>
     apiRequest(`/training/leads/${leadId}/generate-reply`, "POST", data, token),

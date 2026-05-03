@@ -21,7 +21,7 @@ export interface Company {
   users: CompanyUser[];
   whatsappNumbers: WhatsappNumber[];
   tags: string[];
-  settings: { aiEnabled: boolean; language: string };
+  settings: { aiEnabled: boolean; ragEnabled: boolean; language: string };
 }
 
 interface CompanyState {
