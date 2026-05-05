@@ -41,6 +41,12 @@ interface DashboardStats {
   contactTypeBreakdown: { name: string; count: number }[];
 }
 
+interface RemarkStats {
+  daywisePerson: { date: string; name: string; count: number }[];
+  byPerson: { name: string; count: number }[];
+  total: number;
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 const MetricCard: React.FC<{
@@ -80,6 +86,30 @@ const PieTip = ({ active, payload }: any) => {
   );
 };
 
+const RemarkBarTip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const total = payload.reduce((s: number, p: any) => s + (p.value || 0), 0);
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm px-3 py-2 text-xs min-w-[140px]">
+      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+      {payload.map((p: any) => (
+        <div key={p.dataKey} className="flex items-center justify-between gap-3">
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.fill }} />
+            <span className="text-gray-600 truncate max-w-[100px]">{p.dataKey}</span>
+          </span>
+          <span className="font-semibold text-gray-800">{p.value}</span>
+        </div>
+      ))}
+      <div className="border-t border-gray-100 mt-1 pt-1 flex justify-between font-semibold text-gray-700">
+        <span>Total</span><span>{total}</span>
+      </div>
+    </div>
+  );
+};
+
+const PERSON_COLORS = ["#6366f1","#3b82f6","#0891b2","#0d9488","#16a34a","#d97706","#dc2626","#a855f7","#ec4899","#f97316","#eab308","#9ca3af"];
+
 const QUAL_LABELS: Record<string, string> = {
   "12th_appearing": "12th Appearing",
   "12th_passed": "12th Passed",
@@ -103,6 +133,9 @@ const Dashboard: React.FC = () => {
 
   const [rich, setRich] = useState<DashboardStats | null>(null);
   const [richLoading, setRichLoading] = useState(true);
+  const [remarkStats, setRemarkStats] = useState<RemarkStats | null>(null);
+  const [remarkLoading, setRemarkLoading] = useState(true);
+  const [remarkDays, setRemarkDays] = useState(30);
 
   const fetchAll = () => {
     dispatch(fetchFunnelStats());
@@ -112,9 +145,24 @@ const Dashboard: React.FC = () => {
       .then((res: any) => { if (res.success) setRich(res.stats); })
       .catch(() => {})
       .finally(() => setRichLoading(false));
+    setRemarkLoading(true);
+    api.lead
+      .getRemarkStats(token, remarkDays)
+      .then((res: any) => { if (res.success) setRemarkStats(res.stats); })
+      .catch(() => {})
+      .finally(() => setRemarkLoading(false));
   };
 
   useEffect(() => { fetchAll(); }, []);
+
+  useEffect(() => {
+    setRemarkLoading(true);
+    api.lead
+      .getRemarkStats(token, remarkDays)
+      .then((res: any) => { if (res.success) setRemarkStats(res.stats); })
+      .catch(() => {})
+      .finally(() => setRemarkLoading(false));
+  }, [remarkDays]);
 
   const loading = funnelLoading || richLoading;
 
@@ -156,6 +204,31 @@ const Dashboard: React.FC = () => {
     count: c.count,
     fill: CONTACT_COLORS[i % CONTACT_COLORS.length],
   }));
+
+  // Build stacked bar data keyed by person name
+  const allPersons = remarkStats
+    ? Array.from(new Set(remarkStats.daywisePerson.map((d) => d.name)))
+    : [];
+  const personColorMap: Record<string, string> = {};
+  allPersons.forEach((name, i) => { personColorMap[name] = PERSON_COLORS[i % PERSON_COLORS.length]; });
+
+  // Fill every day in the window so the x-axis is continuous
+  const remarkChartData = (() => {
+    if (!remarkStats?.daywisePerson.length) return [];
+    const byDate: Record<string, Record<string, number>> = {};
+    remarkStats.daywisePerson.forEach(({ date, name, count }) => {
+      if (!byDate[date]) byDate[date] = {};
+      byDate[date][name] = (byDate[date][name] ?? 0) + count;
+    });
+    const result = [];
+    for (let i = remarkDays - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+      result.push({ date: label, ...(byDate[key] ?? {}) });
+    }
+    return result;
+  })();
 
   const Skel = ({ h = "h-28" }: { h?: string }) => (
     <div className={`animate-pulse bg-gray-100 rounded-xl ${h}`} />
@@ -366,6 +439,93 @@ const Dashboard: React.FC = () => {
                 })}
               </div>
             ) : null}
+          </div>
+
+
+          {/* ── Row 6: Day-wise Remarks stacked by person ── */}
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-700">Remarks Added — Day by Day</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Stacked by team member</p>
+              </div>
+              <div className="flex gap-1">
+                {[7, 14, 30].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setRemarkDays(d)}
+                    className={`px-2.5 py-1 text-xs rounded-lg transition-colors ${remarkDays === d ? "bg-indigo-100 text-indigo-700 font-semibold" : "text-gray-500 hover:bg-gray-100"}`}
+                  >
+                    {d}d
+                  </button>
+                ))}
+              </div>
+            </div>
+            {remarkLoading && !remarkStats ? (
+              <div className="h-56 animate-pulse bg-gray-100 rounded-lg" />
+            ) : remarkChartData.length ? (
+              <>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={remarkChartData} barSize={remarkDays <= 7 ? 28 : remarkDays <= 14 ? 18 : 10} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
+                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#9ca3af" }} axisLine={false} tickLine={false} interval={remarkDays <= 14 ? 0 : Math.floor(remarkDays / 10)} />
+                    <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip content={<RemarkBarTip />} cursor={{ fill: "#f3f4f6" }} />
+                    {allPersons.map((name, i) => (
+                      <Bar key={name} dataKey={name} stackId="a" fill={personColorMap[name]} radius={i === allPersons.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex flex-wrap gap-3 mt-3">
+                  {allPersons.map((name) => (
+                    <span key={name} className="flex items-center gap-1 text-[10px] text-gray-600">
+                      <span className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: personColorMap[name] }} />
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-gray-400">No remarks in this period</p>
+            )}
+          </div>
+
+          {/* ── Row 7: All-time remarks by person ── */}
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-700">Remarks by Person</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Total all-time: <span className="font-semibold text-gray-600">{remarkStats?.total ?? "—"}</span>
+                </p>
+              </div>
+            </div>
+            {remarkLoading && !remarkStats ? (
+              <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="animate-pulse bg-gray-100 rounded h-5" />)}</div>
+            ) : remarkStats?.byPerson.length ? (
+              <div className="space-y-2.5">
+                {remarkStats.byPerson.map((person, i) => {
+                  const max = remarkStats.byPerson[0].count;
+                  const pct = max > 0 ? (person.count / max) * 100 : 0;
+                  return (
+                    <div key={person.name} className="flex items-center gap-3">
+                      <span className="text-xs text-gray-600 w-28 truncate flex-shrink-0 font-medium">{person.name}</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-2.5">
+                        <div
+                          className="h-2.5 rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%`, backgroundColor: PERSON_COLORS[i % PERSON_COLORS.length] }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 w-8 text-right">{person.count}</span>
+                      <span className="text-xs text-gray-400 w-12 text-right">
+                        {remarkStats.total > 0 ? `${((person.count / remarkStats.total) * 100).toFixed(0)}%` : "—"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">No remarks found</p>
+            )}
           </div>
 
         </div>

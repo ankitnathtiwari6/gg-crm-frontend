@@ -125,6 +125,9 @@ export const leadService = {
 
   getDashboardStats: (token: string): any =>
     apiRequest("/leads/dashboard-stats", "GET", undefined, token),
+
+  getRemarkStats: (token: string, days?: number): any =>
+    apiRequest(buildUrl("/leads/remark-stats", days ? { days } : undefined), "GET", undefined, token),
 };
 
 // Company service
