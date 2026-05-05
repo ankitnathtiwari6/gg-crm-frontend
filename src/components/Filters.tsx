@@ -134,6 +134,14 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
               setScoreMin(String(val));
               updateFilter("neetScoreRange", [val, filters.neetScoreRange[1]]);
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const val = Math.min(Math.max(Number(scoreMin) || 0, 0), filters.neetScoreRange[1]);
+                setScoreMin(String(val));
+                updateFilter("neetScoreRange", [val, filters.neetScoreRange[1]]);
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
             placeholder="Min"
             className={inputClass}
           />
@@ -148,6 +156,14 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters }) => {
               const val = Math.max(Math.min(Number(scoreMax) || 720, 720), filters.neetScoreRange[0]);
               setScoreMax(String(val));
               updateFilter("neetScoreRange", [filters.neetScoreRange[0], val]);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const val = Math.max(Math.min(Number(scoreMax) || 720, 720), filters.neetScoreRange[0]);
+                setScoreMax(String(val));
+                updateFilter("neetScoreRange", [filters.neetScoreRange[0], val]);
+                (e.target as HTMLInputElement).blur();
+              }
             }}
             placeholder="Max"
             className={inputClass}

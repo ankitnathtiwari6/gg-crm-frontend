@@ -95,6 +95,9 @@ export const leadService = {
   getLeads: (token: string, params?: any): any =>
     apiRequest(endpoints.leads.getAll, "GET", undefined, token, params),
 
+  createLead: (data: any, token: string): any =>
+    apiRequest(endpoints.leads.create, "POST", data, token),
+
   getLeadById: async (id: string, token: string): Promise<any> => {
     const res = await apiRequest<any>(`/leads/${id}`, "GET", undefined, token);
     return res?.lead ?? null;

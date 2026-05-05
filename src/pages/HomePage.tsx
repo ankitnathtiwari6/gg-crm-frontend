@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import LeadsTable from "../components/LeadsTable";
 import LeadStats from "../components/LeadStats";
 import { Filters } from "../components/Filters";
@@ -88,6 +89,7 @@ const HomePage: React.FC = () => {
   const todayLeadsCount = useSelector(selectTodayLeadsCount);
   const { sortBy, sortOrder } = useSelector(selectSort);
 
+  const navigate = useNavigate();
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [jumpInput, setJumpInput] = useState("");
@@ -188,6 +190,16 @@ const HomePage: React.FC = () => {
           <div className="flex-1">
             <SearchBar searchQuery={searchQuery} setSearchQuery={handleSearchChange} />
           </div>
+
+          <button
+            onClick={() => navigate("/create-lead")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-500 text-white text-sm hover:bg-green-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="hidden sm:inline">Add Lead</span>
+          </button>
 
           <button
             onClick={() => setFilterDrawerOpen(true)}
@@ -340,7 +352,7 @@ const HomePage: React.FC = () => {
         )}
       </div>
 
-      {/* Filter Drawer */}
+{/* Filter Drawer */}
       {filterDrawerOpen && (
         <>
           <div

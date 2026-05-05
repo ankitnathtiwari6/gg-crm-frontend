@@ -203,6 +203,33 @@ export const fetchFunnelStats = createAsyncThunk(
   }
 );
 
+export const createLead = createAsyncThunk(
+  "leads/createLead",
+  async (
+    data: {
+      phoneNumber: string;
+      name?: string;
+      city?: string;
+      state?: string;
+      neetScore?: number;
+      preferredCountry?: string;
+      source?: string;
+      assignedTo?: { id: string; name: string } | null;
+    },
+    { getState, rejectWithValue }
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const token = state?.auth?.token ?? "";
+      const response = await api.lead.createLead(data, token);
+      if (response.success) return response.lead;
+      return rejectWithValue(response.message || "Failed to create lead");
+    } catch (error) {
+      return rejectWithValue("Failed to create lead. Please try again.");
+    }
+  }
+);
+
 export const deleteLead = createAsyncThunk(
   "leads/deleteLead",
   async (leadId: string, { getState, rejectWithValue }) => {
@@ -360,6 +387,10 @@ const leadsSlice = createSlice({
         if (!action.meta.arg) {
           state.leads = [];
         }
+      })
+      .addCase(createLead.fulfilled, (state, action) => {
+        state.leads = [action.payload, ...state.leads];
+        state.totalLeads += 1;
       })
       .addCase(deleteLead.fulfilled, (state, action) => {
         state.leads = state.leads.filter((l) => l.id !== action.payload);
