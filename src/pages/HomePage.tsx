@@ -22,6 +22,7 @@ import {
   selectSort,
 } from "../redux/slices/leadsSlice";
 import FunnelBar from "../components/FunnelBar";
+import { FilterChips } from "../components/FilterChips";
 import { AppDispatch } from "../redux/store";
 
 const _now = new Date();
@@ -249,6 +250,7 @@ const HomePage: React.FC = () => {
               {funnelVisible ? "Hide Funnel" : "Show Funnel"}
             </button>
           </div>
+          <FilterChips />
         </div>
 
         {/* Funnel bar */}
