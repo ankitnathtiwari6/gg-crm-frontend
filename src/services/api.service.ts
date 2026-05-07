@@ -128,6 +128,9 @@ export const leadService = {
 
   getRemarkStats: (token: string, days?: number): any =>
     apiRequest(buildUrl("/leads/remark-stats", days ? { days } : undefined), "GET", undefined, token),
+
+  getRemarkAnalytics: (token: string, days?: number): any =>
+    apiRequest(buildUrl("/leads/remark-analytics", days ? { days } : undefined), "GET", undefined, token),
 };
 
 // Company service
